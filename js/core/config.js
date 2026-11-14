@@ -1,0 +1,2 @@
+export const SUPABASE_URL = "https://njbuconyoycoycfngemm.supabase.co";
+export const SUPABASE_PUBLIC_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qYnVjb255b3ljb3ljZm5nZW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ1NzUwMzAsImV4cCI6MjExMDE1MTAzMH0.BGuxr8InpZ2zE06wx8UGEfGVQycux3hLcNwDbJr7Hvw";

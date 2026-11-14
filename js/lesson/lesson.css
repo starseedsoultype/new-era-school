@@ -1,0 +1,95 @@
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  font: 1.125rem/1.55 var(--school-font);
+  background: var(--school-page);
+  color: var(--school-ink);
+}
+
+.shell { width: min(100% - 1rem, 60rem); margin-inline: auto; }
+
+.lesson-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--school-surface);
+  border-bottom: 1px solid var(--school-line);
+}
+
+.bar-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .45rem 1rem;
+  padding: .65rem .5rem;
+}
+
+.metrics { display: flex; gap: clamp(.65rem, 4vw, 2rem); }
+.label { display: block; color: var(--school-muted); font-size: .8rem; }
+#time { font-variant-numeric: tabular-nums; }
+progress { grid-column: 1 / -1; width: 100%; height: .45rem; accent-color: var(--school-accent); }
+
+.card {
+  padding: clamp(.9rem, 4vw, 2.4rem);
+  margin-block: clamp(1rem, 5vw, 3rem);
+  background: var(--school-surface);
+  border-radius: 1.15rem;
+}
+
+h1 { margin: 0 0 .4rem; font-size: clamp(1.55rem, 5vw, 2.6rem); line-height: 1.15; }
+p { max-width: 62ch; margin: .9rem 0; }
+p:empty, .actions:empty { display: none; }
+
+.actions, form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: .65rem;
+  margin-top: 1.15rem;
+}
+
+form label { width: 100%; font-weight: 650; }
+
+button, input {
+  font: inherit;
+  min-height: 2.85rem;
+  border-radius: .6rem;
+}
+
+input {
+  width: min(100%, 22rem);
+  padding: .5rem .7rem;
+  color: var(--school-ink);
+  border: 1px solid var(--school-line);
+}
+
+button {
+  padding: .5rem .9rem;
+  font-weight: 650;
+  color: var(--school-surface);
+  background: var(--school-accent);
+  border: 1px solid var(--school-accent);
+  cursor: pointer;
+}
+
+.actions button.secondary {
+  background: var(--school-surface);
+  color: var(--school-accent);
+}
+
+:focus-visible { outline: 3px solid var(--school-accent); outline-offset: 3px; }
+button:disabled, input:disabled { opacity: .65; cursor: wait; }
+
+#feedback:not(:empty) {
+  padding: .65rem .85rem;
+  background: var(--school-active);
+  border-radius: .55rem;
+}
+
+#tool, #help-tool { min-width: 0; overflow-x: auto; }
+
+@media (max-width: 400px) {
+  .bar-inner { gap: .4rem; }
+  .bar-inner strong { font-size: 1rem; }
+}

@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>School tool demo</title>
+  <link rel="stylesheet" href="../../css/tokens.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--school-ink); background: var(--school-page); font: 1rem var(--school-font); }
+    main { max-width: 1200px; margin: auto; padding: clamp(10px, 3vw, 32px); }
+    h1 { margin: 0 0 1rem; font-size: 1.5rem; }
+    .controls { display: flex; align-items: end; flex-wrap: wrap; gap: .75rem; margin-bottom: 1rem; }
+    label { display: inline-flex; flex-direction: column; gap: .25rem; }
+    button, select, input, textarea {
+      color: inherit; font: inherit; background: var(--school-surface);
+      border: 1px solid var(--school-line); border-radius: 6px; padding: .4rem .6rem;
+    }
+    button { cursor: pointer; }
+    button:disabled { opacity: .55; cursor: default; }
+    :focus-visible { outline: 3px solid var(--school-accent); outline-offset: 2px; }
+    #mount { padding: .75rem; background: var(--school-surface); border: 1px solid var(--school-line); border-radius: 8px; }
+    #error { color: var(--school-transfer); }
+    details { margin: 1rem 0; }
+    textarea { width: 100%; margin: .5rem 0; }
+    output { align-self: center; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>School tool demo</h1>
+  <div class="controls">
+    <label>Tool <select id="tool"></select></label>
+    <label>Example <select id="example"></select></label>
+    <label>Mode
+      <select id="mode">
+        <option value="show">Show</option>
+        <option value="explore">Explore</option>
+        <option value="answer">Answer</option>
+      </select>
+    </label>
+    <button id="reset" type="button">Reset tool</button>
+  </div>
+  <div class="controls" id="navigation">
+    <button id="previous" type="button">Previous step</button>
+    <button id="next" type="button">Next step</button>
+    <output id="position" aria-live="polite"></output>
+  </div>
+  <p id="error" role="alert" hidden></p>
+  <div id="mount"></div>
+  <details>
+    <summary>Tool parameters</summary>
+    <label for="params">Edit JSON parameters</label>
+    <textarea id="params" rows="5" spellcheck="false"></textarea>
+    <button id="apply" type="button">Apply parameters</button>
+  </details>
+  <details>
+    <summary>Tool events and state</summary>
+    <pre id="events"></pre>
+  </details>
+</main>
+<script type="module">
+  // New tools need a registry entry and example parameters. The host code stays the same.
+  const registry = {
+    column: {
+      load: () => import('./column.js'),
+      examples: [
+        ['248 + 176', { op: 'add', numbers: ['248', '176'] }],
+        ['503 − 267', { op: 'sub', numbers: ['503', '267'] }],
+        ['12.5 × 6', { op: 'mul', numbers: ['12.5', '6'] }]
+      ]
+    }
+  };
+  const byId = id => document.getElementById(id);
+  const tool = byId('tool');
+  const example = byId('example');
+  const mode = byId('mode');
+  const params = byId('params');
+  const mountPoint = byId('mount');
+  const error = byId('error');
+  const previous = byId('previous');
+  const next = byId('next');
+  const navigation = byId('navigation');
+  const events = byId('events');
+  const position = byId('position');
+  const url = new URL(location.href);
+  const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  let instance;
+  let eventLog = [];
+  let step = 0;
+  let steps = 0;
+  let loadId = 0;
+  let activeParams;
+
+  for (const id of Object.keys(registry)) tool.add(new Option(id, id));
+  const requested = url.searchParams.get('tool') || Object.keys(registry)[0];
+  if (Object.hasOwn(registry, requested)) tool.value = requested;
+
+  function showError(message = '') {
+    error.textContent = message;
+    error.hidden = !message;
+  }
+
+  function selectExample() {
+    activeParams = registry[tool.value].examples[Number(example.value)][1];
+    params.value = JSON.stringify(activeParams, null, 2);
+  }
+
+  function refreshExamples() {
+    example.replaceChildren(...registry[tool.value].examples.map(([label], index) => new Option(label, index)));
+    selectExample();
+  }
+
+  function controls() {
+    navigation.hidden = mode.value !== 'show';
+    navigation.style.display = navigation.hidden ? 'none' : '';
+    previous.disabled = !instance || step <= 0;
+    next.disabled = !instance || (steps > 0 && step >= steps - 1);
+    position.value = steps ? 'Step ' + step + ' of ' + (steps - 1) : 'Step ' + step;
+  }
+
+  function inspect() {
+    events.textContent = JSON.stringify({ events: eventLog, state: instance?.getState() }, null, 2);
+  }
+
+  function onEvent(type, payload) {
+    eventLog.push({ type, payload });
+    eventLog = eventLog.slice(-8);
+    if (type === 'ready' || type === 'step') {
+      step = payload?.step ?? (type === 'ready' ? 0 : step);
+      steps = payload?.steps ?? steps;
+    }
+    controls();
+    inspect();
+  }
+
+  async function mountTool() {
+    const ticket = ++loadId;
+    instance?.destroy();
+    instance = undefined;
+    eventLog = [];
+    step = 0;
+    steps = 0;
+    showError();
+    controls();
+    inspect();
+    try {
+      const { default: module } = await registry[tool.value].load();
+      if (ticket !== loadId) return;
+      instance = module.mount(mountPoint, activeParams, {
+        mode: mode.value, lang: 'en', reducedMotion: motion.matches, onEvent
+      });
+      controls();
+      inspect();
+    } catch (failure) {
+      if (ticket === loadId) showError(failure.message);
+    }
+  }
+
+  function move(offset) {
+    const target = Math.max(0, step + offset);
+    step = target;
+    instance?.setStep(target);
+    controls();
+    inspect();
+  }
+
+  tool.addEventListener('change', () => {
+    url.searchParams.set('tool', tool.value);
+    history.replaceState(null, '', url);
+    refreshExamples();
+    mountTool();
+  });
+  example.addEventListener('change', () => { selectExample(); mountTool(); });
+  mode.addEventListener('change', mountTool);
+  byId('reset').addEventListener('click', mountTool);
+  previous.addEventListener('click', () => move(-1));
+  next.addEventListener('click', () => move(1));
+  byId('apply').addEventListener('click', () => {
+    try {
+      const value = JSON.parse(params.value);
+      instance?.setParams(value);
+      activeParams = value;
+      if (!instance) mountTool();
+      showError();
+      controls();
+      inspect();
+    } catch (failure) {
+      showError(failure.message);
+    }
+  });
+
+  refreshExamples();
+  if (Object.hasOwn(registry, requested)) mountTool();
+  else {
+    controls();
+    showError('Unknown tool: ' + requested + '.');
+    tool.selectedIndex = -1;
+  }
+</script>
+</body>
+</html>

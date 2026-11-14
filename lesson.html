@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Math lesson | New Era School</title>
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./js/lesson/lesson.css">
+  <script defer src="./vendor/supabase.js"></script>
+  <script type="module" src="./js/lesson/main.js"></script>
+</head>
+<body>
+  <header class="lesson-bar">
+    <div class="shell bar-inner">
+      <div><span class="label">Math lesson</span><strong id="step">Get ready</strong></div>
+      <div class="metrics">
+        <div><span class="label">Time left</span><strong id="time" role="timer" aria-live="off">30:00</strong></div>
+        <div><span class="label">Lesson stars</span><strong id="stars" aria-live="polite">0</strong></div>
+      </div>
+      <progress id="progress" max="7" value="0" aria-label="Lesson steps"></progress>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section id="login" class="card" hidden>
+      <h1>Sign in to school</h1>
+      <form id="sign-in">
+        <label for="email">Your email address</label>
+        <input id="email" name="email" type="email" autocomplete="username" required>
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+        <button>Sign in</button>
+      </form>
+      <p role="status"></p>
+    </section>
+    <section id="workspace" class="card" aria-labelledby="heading">
+      <h1 id="heading" tabindex="-1">Your math lesson</h1>
+      <p id="prompt"></p>
+      <div id="tool"></div>
+      <form id="answer" hidden>
+        <label for="entry">Your answer</label>
+        <input id="entry" name="entry" autocomplete="off" required>
+        <button>Check answer</button>
+      </form>
+      <form id="photo" hidden>
+        <label for="image">Photo of your notebook</label>
+        <input id="image" name="image" type="file" accept="image/*">
+        <button>Upload photo</button>
+      </form>
+      <p id="feedback" role="status"></p>
+      <div id="help-tool"></div>
+      <div id="actions" class="actions"></div>
+    </section>
+  </main>
+</body>
+</html>

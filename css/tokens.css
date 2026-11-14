@@ -1,0 +1,14 @@
+/* Temporary design tokens for the tool demo. */
+:root {
+  --school-page: #eef3f7;
+  --school-surface: #ffffff;
+  --school-ink: #182840;
+  --school-muted: #475b70;
+  --school-line: #637a91;
+  --school-active: #d5ecff;
+  --school-accent: #14569c;
+  --school-transfer: #903b08;
+  --school-transfer-bg: #fff0d5;
+  --school-font: system-ui, sans-serif;
+  --school-number-font: ui-monospace, monospace;
+}
