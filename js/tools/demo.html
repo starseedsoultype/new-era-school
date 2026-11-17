@@ -70,6 +70,37 @@
         ['503 − 267', { op: 'sub', numbers: ['503', '267'] }],
         ['12.5 × 6', { op: 'mul', numbers: ['12.5', '6'] }]
       ]
+    },
+    sets: {
+      load: () => import('./sets.js'),
+      examples: [
+        ['Furniture: the chairs', { layout: 'subset', sets: [{ label: 'Furniture' }, { label: 'Chairs' }],
+          items: [{ kind: 'table' }, { kind: 'chair', id: 'c1' }, { kind: 'bed' }, { kind: 'chair', id: 'c2' },
+            { kind: 'wardrobe' }, { kind: 'lamp' }, { kind: 'chair', id: 'c3' }], select: ['c1', 'c2', 'c3'] }],
+        ['Mushrooms: white ones', { layout: 'subset', sets: [{ label: 'Basket' }, { label: 'White mushrooms' }],
+          items: [{ kind: 'porcini', id: 'w1' }, { kind: 'amanita' }, { kind: 'porcini', id: 'w2' }, { kind: 'chanterelle' },
+            { kind: 'porcini', id: 'w3' }], select: ['w1', 'w2', 'w3'], steps: ['frame', 'items', 'move_each', 'shade'] }],
+        ['Fruit (try it)', { layout: 'subset', sets: [{ label: 'Fruit' }, { label: 'Pears' }],
+          items: [{ kind: 'apple', id: 'a1' }, { kind: 'pear', id: 'p1' }, { kind: 'plum' }, { kind: 'pear', id: 'p2' },
+            { kind: 'apple', id: 'a2' }, { kind: 'plum', id: 'q2' }], select: ['p1', 'p2'] }],
+        ['Multiples of 5 (check each)', { layout: 'subset', sets: [{ label: '{12, 15, 20, 27, 30}' }, { label: 'multiples of 5' }],
+          items: [{ text: '12' }, { text: '15' }, { text: '20' }, { text: '27' }, { text: '30' }],
+          select: ['15', '20', '30'], steps: ['items', 'check_each', 'shade'] }],
+        ['Book fig. 3: dark figures', { layout: 'subset', sets: [{ label: 'Figures' }, { label: 'Dark figures' }],
+          items: [{ kind: 'triangle', label: 'A' }, { kind: 'triangle', color: 'dark', label: 'B' },
+            { kind: 'quad', label: 'C' }, { kind: 'quad', label: 'K' },
+            { kind: 'triangle', color: 'dark', label: 'M' }, { kind: 'triangle', label: 'P' }],
+          select: ['B', 'M'], steps: ['items'] }],
+        ['Whole set is its own part', { layout: 'subset', sets: [{ label: 'Basket' }, { label: 'Same basket' }],
+          items: [{ kind: 'apple' }, { kind: 'pear' }, { kind: 'plum' }], select: ['apple', 'pear', 'plum'],
+          steps: ['items', 'move', 'shade'] }],
+        ['Empty oval', { layout: 'empty', sets: [{ label: 'Chairs on the Moon' }] }],
+        ['One set of numbers', { layout: 'single', sets: [{ label: 'A' }], items: [{ text: '3' }, { text: '5' }, { text: '7' }] }],
+        ['Overlap: 2 and 3', { layout: 'overlap', sets: [{ id: 'A', label: 'multiples of 2' }, { id: 'B', label: 'multiples of 3' }],
+          items: [{ text: '2', in: ['A'] }, { text: '4', in: ['A'] }, { text: '6', in: ['A', 'B'] },
+            { text: '8', in: ['A'] }, { text: '3', in: ['B'] }, { text: '9', in: ['B'] }],
+          steps: ['frame', 'items', 'shade'] }]
+      ]
     }
   };
   const byId = id => document.getElementById(id);

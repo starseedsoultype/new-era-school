@@ -10,54 +10,71 @@
   <script type="module" src="./js/lesson/main.js"></script>
 </head>
 <body>
-  <header class="lesson-bar">
-    <div class="shell bar-inner">
-      <strong id="step" class="step-name">Get ready</strong>
-      <span id="demo-badge" class="badge" hidden>Demo</span>
-      <div class="metrics">
-        <span id="time" role="timer" aria-live="off">30 min left</span>
+  <div class="window">
+    <header class="lesson-bar">
+      <div class="titlebar">
+        <span class="dots" aria-hidden="true"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i></span>
+        <span id="win-title" class="win-title">new-era-school &mdash; lesson</span>
+        <span id="demo-badge" class="badge" hidden>demo</span>
+      </div>
+      <div class="statusline">
+        <span id="time" role="timer" aria-live="off">&#9201; 30:00</span>
         <span id="stars" aria-live="polite" aria-label="Stars this lesson: 0">&#9733; 0</span>
+        <strong id="step" class="step-name">step 0/7 ready</strong>
       </div>
       <div id="progress" class="progress" role="progressbar" aria-label="Lesson steps"
         aria-valuemin="0" aria-valuemax="7" aria-valuenow="0"></div>
-    </div>
-  </header>
+    </header>
 
-  <main class="shell">
-    <section id="login" class="card" hidden>
-      <h1>Sign in to school</h1>
-      <form id="sign-in">
-        <label for="email">Your email address</label>
-        <input id="email" name="email" type="email" autocomplete="username" required>
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" required>
-        <button>Sign in</button>
-      </form>
-      <p role="status"></p>
-    </section>
-    <section id="workspace" class="card" aria-labelledby="heading">
-      <h1 id="heading" tabindex="-1">Your math lesson</h1>
-      <p id="kind" class="kind"></p>
-      <p id="prompt" class="prompt"></p>
-      <p id="line" class="line"></p>
-      <div id="tool"></div>
-      <form id="answer" hidden>
-        <label for="entry">Your answer</label>
-        <div class="answer-row">
-          <input id="entry" name="entry" autocomplete="off" required>
-          <button>Check</button>
+    <main class="screen">
+      <section id="login" class="pane" hidden>
+        <h1><span class="ps" aria-hidden="true">$ </span>sign-in</h1>
+        <form id="sign-in">
+          <label for="email" class="cmdline"><span class="ps" aria-hidden="true">login: </span><span class="sr-only">Your email address</span></label>
+          <input id="email" name="email" type="email" autocomplete="username" required class="cmd-input">
+          <label for="password" class="cmdline"><span class="ps" aria-hidden="true">password: </span><span class="sr-only">Password</span></label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required class="cmd-input">
+          <button class="cmd go"><span class="pre" aria-hidden="true">&gt; </span>sign in<span class="suf" aria-hidden="true"> &#9166;</span></button>
+        </form>
+        <p role="status" class="status-line"></p>
+      </section>
+      <section id="workspace" class="pane" aria-labelledby="heading">
+        <h1 id="heading" tabindex="-1"><span class="ps" aria-hidden="true">$ </span><span id="cmd">lesson</span></h1>
+        <p id="comment" class="comment"></p>
+        <p id="kind" class="kind"></p>
+        <p id="prompt" class="prompt"></p>
+        <p id="line" class="line"></p>
+        <div id="tool" class="tool-card"></div>
+        <form id="answer" hidden>
+          <label for="entry" class="cmdline"><span class="ps" aria-hidden="true">answer &#10095; </span><span class="sr-only">Your answer</span></label>
+          <div class="answer-row">
+            <input id="entry" name="entry" autocomplete="off" required class="cmd-input" spellcheck="false">
+            <button class="cmd go"><span class="pre" aria-hidden="true">&gt; </span>check<span class="suf" aria-hidden="true"> &#9166;</span></button>
+          </div>
+        </form>
+        <form id="photo" hidden>
+          <label for="image" class="cmdline">Photo of your notebook</label>
+          <input id="image" name="image" type="file" accept="image/*" class="cmd-file">
+          <button class="cmd go"><span class="pre" aria-hidden="true">&gt; </span>upload photo</button>
+        </form>
+        <p id="feedback" role="status"></p>
+        <div id="help-tool" class="tool-card"></div>
+        <div id="actions" class="actions"></div>
+        <div id="help-panel" class="help-panel"></div>
+      </section>
+    </main>
+
+    <footer class="feedback-bar">
+      <form id="fb-form" class="fb-inner">
+        <label for="fb-text" class="fb-label"># Something wrong or unclear? Write here</label>
+        <div class="fb-row">
+          <span class="ps" aria-hidden="true">feedback &#10095; </span>
+          <textarea id="fb-text" name="fb-text" rows="1" maxlength="1000" autocomplete="off" spellcheck="false"></textarea>
+          <button id="fb-send" class="cmd" type="submit" disabled>send<span class="suf" aria-hidden="true"> &#9166;</span></button>
         </div>
+        <p id="fb-status" role="status" aria-live="polite"></p>
       </form>
-      <form id="photo" hidden>
-        <label for="image">Photo of your notebook</label>
-        <input id="image" name="image" type="file" accept="image/*">
-        <button>Upload photo</button>
-      </form>
-      <p id="feedback" role="status"></p>
-      <div id="help-tool"></div>
-      <div id="actions" class="actions"></div>
-      <div id="help-panel" class="help-panel"></div>
-    </section>
-  </main>
+    </footer>
+  </div>
 </body>
 </html>

@@ -19,3 +19,39 @@
   --school-font: system-ui, sans-serif;
   --school-number-font: ui-monospace, monospace;
 }
+
+/* Soft colours for the `sets` tool: pictures of furniture, mushrooms, fruit. The tool falls back to the tokens above if these are missing. */
+:root {
+  --school-icon-line: #3d4b63;
+  --school-icon-wood: #f0d3a8;
+  --school-icon-brown: #d9b384;
+  --school-icon-red: #f2998d;
+  --school-icon-orange: #f6ae63;
+  --school-icon-yellow: #f7da7a;
+  --school-icon-green: #97d2a0;
+  --school-icon-purple: #bba6e3;
+}
+
+/* Terminal palette: the lesson screen looks like a programmer's terminal. Pictures from the tools keep the soft light tokens above and sit on a light card. All text pairs are at least 4.5:1 (checked on --term-bg and --term-panel). */
+:root {
+  --term-desk-1: #11141b;
+  --term-desk-2: #1d2433;
+  --term-bg: #1c1f26;
+  --term-bar: #2a2e38;
+  --term-panel: #262a33;
+  --term-line: #3b4150;
+  --term-text: #dde2ec;
+  --term-muted: #9ca5b5;
+  --term-green: #7ee2a0;
+  --term-red: #ff8f8f;
+  --term-amber: #f6c76f;
+  --term-accent: #82b8ff;
+  --term-cursor: #dde2ec;
+  --term-on-accent: #0f1620;
+  --term-dot-red: #ff5f57;
+  --term-dot-yellow: #febc2e;
+  --term-dot-green: #28c840;
+  --term-shadow: 0 24px 60px rgba(0, 0, 0, .45), 0 2px 8px rgba(0, 0, 0, .35);
+  --term-radius: .9rem;
+  --term-font: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
