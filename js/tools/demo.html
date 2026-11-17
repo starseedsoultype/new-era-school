@@ -101,6 +101,19 @@
             { text: '8', in: ['A'] }, { text: '3', in: ['B'] }, { text: '9', in: ['B'] }],
           steps: ['frame', 'items', 'shade'] }]
       ]
+    },
+    percent_bar: {
+      load: () => import('./percent_bar.js'),
+      examples: [
+        ['Discount 20% of 80 coins', { base: 80, unit: 'coins', item: 'Block set', change: { kind: 'discount', percent: 20 } }],
+        ['Markup 25% of 120 coins', { base: 120, unit: 'coins', item: 'Upgrade', change: { kind: 'markup', percent: 25 } }],
+        ['Discount 15% (20 parts)', { base: 200, unit: 'coins', item: 'Skin', change: { kind: 'discount', percent: 15 } }],
+        ['Discount 50% of 36 (2 parts)', { base: 36, unit: 'coins', parts: 2, change: { kind: 'discount', percent: 50 } }],
+        ['Reverse: 80 after 20% off', { ask: 'before', known: 80, unit: 'coins', item: 'Block set', change: { kind: 'discount', percent: 20 } }],
+        ['Reverse: 150 after 25% markup', { ask: 'before', known: 150, unit: 'coins', item: 'Upgrade', change: { kind: 'markup', percent: 25 } }],
+        ['Explore: price 60 (no change set)', { base: 60, unit: 'coins', item: 'Cap' }],
+        ['Explore: reverse, know 45 after 25% off', { ask: 'before', known: 45, unit: 'coins', change: { kind: 'discount', percent: 25 } }]
+      ]
     }
   };
   const byId = id => document.getElementById(id);
