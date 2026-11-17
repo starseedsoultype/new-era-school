@@ -1,0 +1,102 @@
+/* Student and parent pages: the same terminal as the lesson (lesson.css + tokens.css); only what the lesson does not have. */
+a { color: var(--term-accent); }
+a:hover { color: var(--term-text); }
+.statusline a { text-decoration: none; }
+.statusline a:hover { text-decoration: underline; }
+#stars { color: var(--term-amber); }
+#to-lesson { margin-left: auto; }
+#waiting, #done { color: var(--term-muted); }
+
+h2.kind { font-weight: 400; margin-top: 1.75rem; }
+h2.kind:focus { outline: none; }
+.balance { margin: .5rem 0 .1rem; font-size: 1.15rem; }
+.balance .big-stars { font-size: 2.4rem; font-weight: 700; line-height: 1.1; color: var(--term-amber); margin-right: .4rem; }
+.notice:not(:empty) { margin: .9rem 0 0; font-weight: 700; color: var(--term-muted); overflow-wrap: anywhere; }
+.notice.ok { color: var(--term-green); }
+.notice.err { color: var(--term-red); }
+.empty { color: var(--term-muted); }
+
+/* Rows: a list that reads like terminal output */
+.rows { list-style: none; margin: .35rem 0 0; padding: 0; }
+.rows > li {
+  display: grid;
+  grid-template-columns: 3.2rem minmax(0, 1fr) auto;
+  gap: .15rem .8rem;
+  align-items: baseline;
+  padding: .5rem 0;
+  border-bottom: 1px dashed var(--term-line);
+  overflow-wrap: anywhere;
+}
+.rows > li:last-child { border-bottom: 0; }
+.rows .lead { font-variant-numeric: tabular-nums; color: var(--term-green); font-weight: 700; }
+.rows .what .sub { color: var(--term-muted); }
+.rows .when { color: var(--term-muted); font-size: .9rem; white-space: nowrap; }
+.rows .row-actions { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: .5rem; }
+.rows.plain > li { display: block; border-bottom: 0; padding: .15rem 0; }
+.rows.plain b { color: var(--term-amber); font-weight: 700; }
+
+.tag {
+  display: inline-block;
+  min-width: 5.6rem;
+  padding: 0 .5rem;
+  font-size: .8rem;
+  text-align: center;
+  border: 1px solid currentColor;
+  border-radius: 99px;
+}
+.tag.requested, .tag.new { color: var(--term-amber); }
+.tag.given, .tag.done { color: var(--term-green); }
+.tag.seen { color: var(--term-muted); }
+.rows.requests > li { grid-template-columns: 6.6rem minmax(0, 1fr) auto; }
+.lesson-row.done .lead { color: var(--term-muted); }
+.lesson-row.today .lead, .lesson-row.today .what { color: var(--term-accent); font-weight: 700; }
+.lesson-row.next { color: var(--term-muted); }
+.lesson-row.next .lead { color: var(--term-muted); }
+
+/* Feedback entries: header line (status, date, place) plus the text as typed */
+.feedback > li { display: block; }
+.feedback .meta { display: flex; flex-wrap: wrap; align-items: center; gap: .2rem .7rem; font-size: .85rem; color: var(--term-muted); }
+.feedback .tag { min-width: 3.8rem; }
+.feedback .text { display: block; margin-top: .35rem; white-space: pre-wrap; font-size: 1.02rem; }
+.feedback .row-actions { display: flex; margin-top: .5rem; }
+
+/* Forms */
+.field-row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .6rem; margin-top: .75rem; }
+.field-row .cmdline { flex: 0 0 auto; }
+.field-row .cmd-input { width: 7.5rem; flex: 0 0 auto; }
+.field-row .cmd-input.wide { width: 11rem; }
+.field-row .times { color: var(--term-muted); }
+.preview { margin: .6rem 0 0; min-height: 1.6em; color: var(--term-accent); font-weight: 700; }
+.preview.bad { color: var(--term-amber); }
+.hint { margin: .6rem 0 0; font-size: .9rem; color: var(--term-muted); }
+.rate-now { margin: .35rem 0 0; }
+.rate-now b { color: var(--term-amber); }
+#exchange form, #rate form { margin-top: .5rem; }
+.cmd-input[type=number] { appearance: textfield; -moz-appearance: textfield; }
+.cmd-input[type=number]::-webkit-outer-spin-button, .cmd-input[type=number]::-webkit-inner-spin-button { appearance: none; margin: 0; }
+
+.actions a.cmd-link {
+  display: inline-flex; align-items: center; min-height: 3rem; padding: .5rem 1rem;
+  color: var(--term-accent); text-decoration: none; background: rgba(130, 184, 255, .12);
+  border: 1px solid var(--term-accent); border-radius: .6rem; font-weight: 700;
+}
+a.cmd-link .pre, a.cmd-link .suf { color: var(--term-green); white-space: pre; }
+.rows a.cmd-link { display: inline-flex; align-items: center; min-height: 2.6rem; padding: .3rem .9rem; color: var(--term-accent);
+  text-decoration: none; border: 1px solid var(--term-accent); border-radius: .6rem; font-weight: 700; background: rgba(130, 184, 255, .12); }
+.rows button.cmd { min-height: 2.6rem; padding: .3rem .9rem; }
+.actions { margin-bottom: .5rem; }
+
+@media (max-width: 520px) {
+  .rows > li { grid-template-columns: 2.6rem minmax(0, 1fr); }
+  .rows .when, .rows a.cmd-link { grid-column: 2; justify-self: start; white-space: nowrap; }
+  .rows.requests > li { grid-template-columns: minmax(0, 1fr); }
+  .rows.requests .when { grid-column: 1; }
+  .rows.requests .tag { justify-self: start; }
+  .rows .row-actions { grid-column: 1 / -1; }
+  .balance .big-stars { font-size: 2rem; }
+  .field-row .cmd-input, .field-row .cmd-input.wide { width: 100%; flex: 1 1 100%; }
+  .field-row .cmdline { flex: 1 1 100%; }
+  .rate-line .cmd-input { width: 6rem; flex: 0 0 auto; }
+  .rate-line .cmd-input.wide { flex: 1 1 8rem; width: auto; }
+  #to-lesson { margin-left: 0; }
+}

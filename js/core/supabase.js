@@ -15,6 +15,7 @@ export function schoolApi(client) {
   }
   return {
     session: (action, fields = {}) => invoke("session", { action, ...fields }),
+    stars: (action, fields = {}) => invoke("stars", { action, ...fields }),
     submit: body => invoke("submit", body),
     teacher: body => invoke("teacher", body),
     async alternatives(task, difficulty) {

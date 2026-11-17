@@ -77,7 +77,8 @@ body {
   border-bottom: 1px solid var(--term-line);
 }
 #time { color: var(--term-accent); }
-#stars { color: var(--term-amber); }
+#stars { color: var(--term-amber); text-decoration: none; }
+#stars:hover { text-decoration: underline; }
 .step-name { font-weight: 400; color: var(--term-text); }
 
 .progress { display: flex; gap: .25rem; padding: 0; height: .25rem; background: var(--term-panel); }

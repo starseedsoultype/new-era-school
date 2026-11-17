@@ -1,4 +1,4 @@
-export async function requireLogin(client, panel) {
+export async function requireLogin(client, panel, wrong = "The email or password is not right. Try again.") {
   const { data, error } = await client.auth.getSession();
   if (error) throw error;
   if (data.session) return data.session;
@@ -22,7 +22,7 @@ export async function requireLogin(client, panel) {
         panel.hidden = true;
         resolve(result.data.session);
       } catch {
-        status.textContent = "The email or password is not right. Try again.";
+        status.textContent = wrong;
       } finally {
         button.disabled = false;
       }

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Родитель | New Era School</title>
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./js/lesson/lesson.css">
+  <link rel="stylesheet" href="./js/pages/pages.css">
+  <script defer src="./vendor/supabase.js"></script>
+  <script type="module" src="./js/pages/parent.js"></script>
+</head>
+<body>
+  <div class="window">
+    <header class="lesson-bar">
+      <div class="titlebar">
+        <span class="dots" aria-hidden="true"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i></span>
+        <span class="win-title">new-era-school &mdash; parent</span>
+        <span id="demo-badge" class="badge" hidden>демо</span>
+      </div>
+      <div class="statusline">
+        <span id="stars" aria-live="polite">&#9733; 0</span>
+        <span id="waiting"></span>
+        <span id="done"></span>
+      </div>
+    </header>
+
+    <main class="screen">
+      <section id="login" class="pane" hidden>
+        <h1><span class="ps" aria-hidden="true">$ </span>вход родителя</h1>
+        <form id="sign-in">
+          <label for="email" class="cmdline"><span class="ps" aria-hidden="true">login: </span><span class="sr-only">Почта</span></label>
+          <input id="email" name="email" type="email" autocomplete="username" required class="cmd-input">
+          <label for="password" class="cmdline"><span class="ps" aria-hidden="true">password: </span><span class="sr-only">Пароль</span></label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required class="cmd-input">
+          <button class="cmd go"><span class="pre" aria-hidden="true">&gt; </span>sign in<span class="suf" aria-hidden="true"> &#9166;</span></button>
+        </form>
+        <p role="status" class="status-line"></p>
+      </section>
+
+      <section id="workspace" class="pane" aria-labelledby="heading" hidden>
+        <h1 id="heading" tabindex="-1"><span class="ps" aria-hidden="true">$ </span>parent</h1>
+        <p id="notice" role="status" class="notice"></p>
+
+        <h2 class="kind">сводка</h2>
+        <ul id="summary" class="rows plain"></ul>
+
+        <h2 class="kind">запросы на обмен</h2>
+        <ul id="requests" class="rows requests"></ul>
+
+        <h2 class="kind">курс обмена</h2>
+        <div id="rate"></div>
+
+        <h2 class="kind">жалобы ученика</h2>
+        <ul id="feedback" class="rows feedback"></ul>
+
+        <div id="tools" class="actions"></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

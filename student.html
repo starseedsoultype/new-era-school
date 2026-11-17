@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My stars | New Era School</title>
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./js/lesson/lesson.css">
+  <link rel="stylesheet" href="./js/pages/pages.css">
+  <script defer src="./vendor/supabase.js"></script>
+  <script type="module" src="./js/pages/student.js"></script>
+</head>
+<body>
+  <div class="window">
+    <header class="lesson-bar">
+      <div class="titlebar">
+        <span class="dots" aria-hidden="true"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i></span>
+        <span class="win-title">new-era-school &mdash; stars</span>
+        <span id="demo-badge" class="badge" hidden>demo</span>
+      </div>
+      <div class="statusline">
+        <a id="stars" href="#exchange-h" aria-live="polite">&#9733; 0</a>
+        <span id="waiting"></span>
+        <a id="to-lesson" href="lesson.html">&lt; lesson</a>
+      </div>
+    </header>
+
+    <main class="screen">
+      <section id="login" class="pane" hidden>
+        <h1><span class="ps" aria-hidden="true">$ </span>sign-in</h1>
+        <form id="sign-in">
+          <label for="email" class="cmdline"><span class="ps" aria-hidden="true">login: </span><span class="sr-only">Your email address</span></label>
+          <input id="email" name="email" type="email" autocomplete="username" required class="cmd-input">
+          <label for="password" class="cmdline"><span class="ps" aria-hidden="true">password: </span><span class="sr-only">Password</span></label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required class="cmd-input">
+          <button class="cmd go"><span class="pre" aria-hidden="true">&gt; </span>sign in<span class="suf" aria-hidden="true"> &#9166;</span></button>
+        </form>
+        <p role="status" class="status-line"></p>
+      </section>
+
+      <section id="workspace" class="pane" aria-labelledby="heading" hidden>
+        <h1 id="heading" tabindex="-1"><span class="ps" aria-hidden="true">$ </span>stars</h1>
+        <p id="balance" class="balance"></p>
+        <p id="balance-sub" class="comment"></p>
+        <p id="notice" role="status" class="notice"></p>
+
+        <h2 class="kind">recent stars</h2>
+        <ul id="ledger" class="rows"></ul>
+
+        <h2 class="kind">lessons</h2>
+        <ul id="lessons" class="rows"></ul>
+        <div id="lessons-more" class="actions"></div>
+
+        <h2 id="exchange-h" class="kind" tabindex="-1">exchange</h2>
+        <div id="exchange"></div>
+
+        <h2 class="kind">my requests</h2>
+        <ul id="requests" class="rows requests"></ul>
+
+        <div id="tools" class="actions"></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
