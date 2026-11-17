@@ -3,13 +3,14 @@
 
 body {
   margin: 0;
-  font: 1.125rem/1.55 var(--school-font);
+  font: 1.125rem/1.6 var(--school-font);
   background: var(--school-page);
   color: var(--school-ink);
 }
 
-.shell { width: min(100% - 1rem, 60rem); margin-inline: auto; }
+.shell { width: min(100% - 2rem, 45rem); margin-inline: auto; }
 
+/* Top bar: always visible, quiet */
 .lesson-bar {
   position: sticky;
   top: 0;
@@ -19,77 +20,132 @@ body {
 }
 
 .bar-inner {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: .45rem 1rem;
-  padding: .65rem .5rem;
-}
-
-.metrics { display: flex; gap: clamp(.65rem, 4vw, 2rem); }
-.label { display: block; color: var(--school-muted); font-size: .8rem; }
-#time { font-variant-numeric: tabular-nums; }
-progress { grid-column: 1 / -1; width: 100%; height: .45rem; accent-color: var(--school-accent); }
-
-.card {
-  padding: clamp(.9rem, 4vw, 2.4rem);
-  margin-block: clamp(1rem, 5vw, 3rem);
-  background: var(--school-surface);
-  border-radius: 1.15rem;
-}
-
-h1 { margin: 0 0 .4rem; font-size: clamp(1.55rem, 5vw, 2.6rem); line-height: 1.15; }
-p { max-width: 62ch; margin: .9rem 0; }
-p:empty, .actions:empty { display: none; }
-
-.actions, form {
   display: flex;
   flex-wrap: wrap;
-  align-items: end;
-  gap: .65rem;
-  margin-top: 1.15rem;
+  align-items: center;
+  gap: .3rem .75rem;
+  padding: .6rem 0 .7rem;
 }
 
+.step-name { flex: 1 1 auto; min-width: 0; font-size: 1.1rem; }
+.metrics { display: flex; gap: 1rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+#stars { color: var(--school-transfer); }
+.badge {
+  padding: .1rem .6rem;
+  font-size: .85rem;
+  font-weight: 650;
+  color: var(--school-note-ink);
+  background: var(--school-note-bg);
+  border-radius: 99px;
+}
+
+.progress { display: flex; gap: .3rem; flex: 1 0 100%; }
+.progress span { flex: 1; height: .5rem; background: var(--school-active); border-radius: 99px; }
+.progress span.done { background: var(--school-accent); }
+.progress span.now { background: var(--school-accent); box-shadow: 0 0 0 3px var(--school-active); }
+
+/* The lesson card */
+.card {
+  padding: clamp(1.1rem, 5vw, 2.5rem);
+  margin-block: clamp(1rem, 4vw, 2.5rem);
+  background: var(--school-surface);
+  border-radius: var(--school-radius);
+}
+
+h1 { margin: 0 0 1rem; font-size: clamp(1.75rem, 7vw, 2.25rem); line-height: 1.2; }
+h1:focus { outline: none; }
+p { margin: 1rem 0; }
+p:empty, .actions:empty, .help-panel:empty, #tool:empty, #help-tool:empty { display: none; }
+
+.kind {
+  margin: 0 0 .35rem;
+  font-size: .85rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--school-muted);
+}
+
+.prompt, .line { font-size: 1.3rem; line-height: 1.5; }
+.prompt { font-weight: 600; }
+
+/* Explanation lines: rule = highlighted box, remark = gentle note */
+.line[data-kind="rule"] {
+  padding: 1rem 1.2rem;
+  background: var(--school-rule-bg);
+  border-left: .4rem solid var(--school-accent);
+  border-radius: .9rem;
+  font-weight: 600;
+}
+.line[data-kind="remark"] {
+  padding: 1rem 1.2rem;
+  color: var(--school-note-ink);
+  background: var(--school-note-bg);
+  border-radius: .9rem;
+}
+
+#tool, #help-tool { min-width: 0; margin-block: 1.25rem; overflow-x: auto; }
+#tool svg { margin-inline: auto; }
+/* Picture mode: the line above already says what happens, so keep the picture alone. */
+#tool.is-show [role="status"] { display: none; }
+
+/* Forms */
+form { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.25rem; }
 form label { width: 100%; font-weight: 650; }
+.answer-row { display: flex; flex-wrap: wrap; gap: .6rem; width: 100%; }
 
 button, input {
   font: inherit;
-  min-height: 2.85rem;
-  border-radius: .6rem;
+  min-height: 3.1rem;
+  border-radius: .8rem;
 }
 
 input {
-  width: min(100%, 22rem);
-  padding: .5rem .7rem;
+  width: min(100%, 16rem);
+  padding: .5rem .85rem;
+  font-size: 1.5rem;
   color: var(--school-ink);
-  border: 1px solid var(--school-line);
+  border: 2px solid var(--school-line);
 }
+input[type="file"] { font-size: 1rem; width: 100%; }
 
 button {
-  padding: .5rem .9rem;
+  padding: .6rem 1.3rem;
   font-weight: 650;
   color: var(--school-surface);
   background: var(--school-accent);
-  border: 1px solid var(--school-accent);
+  border: 2px solid var(--school-accent);
   cursor: pointer;
 }
 
-.actions button.secondary {
-  background: var(--school-surface);
+.answer-row button { min-width: 7rem; }
+
+.actions, .help-panel { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.25rem; }
+.actions button { min-width: 9rem; min-height: 3.4rem; font-size: 1.15rem; }
+.actions button.big { flex: 1 1 12rem; min-height: 3.75rem; font-size: 1.3rem; }
+.actions button.secondary, .help-panel button.secondary {
   color: var(--school-accent);
+  background: var(--school-surface);
 }
+
+.help-panel {
+  padding: 1rem;
+  background: var(--school-grid-bg);
+  border-radius: .9rem;
+}
+.help-panel button { flex: 1 1 12rem; }
 
 :focus-visible { outline: 3px solid var(--school-accent); outline-offset: 3px; }
 button:disabled, input:disabled { opacity: .65; cursor: wait; }
 
 #feedback:not(:empty) {
-  padding: .65rem .85rem;
+  padding: .8rem 1rem;
   background: var(--school-active);
-  border-radius: .55rem;
+  border-radius: .8rem;
 }
+#feedback.ok:not(:empty) { color: var(--school-ok-ink); background: var(--school-ok-bg); }
 
-#tool, #help-tool { min-width: 0; overflow-x: auto; }
-
-@media (max-width: 400px) {
-  .bar-inner { gap: .4rem; }
-  .bar-inner strong { font-size: 1rem; }
+@media (max-width: 480px) {
+  .actions button, .answer-row button, .answer-row input { flex: 1 1 100%; width: 100%; }
+  .metrics { gap: .75rem; }
 }

@@ -12,12 +12,14 @@
 <body>
   <header class="lesson-bar">
     <div class="shell bar-inner">
-      <div><span class="label">Math lesson</span><strong id="step">Get ready</strong></div>
+      <strong id="step" class="step-name">Get ready</strong>
+      <span id="demo-badge" class="badge" hidden>Demo</span>
       <div class="metrics">
-        <div><span class="label">Time left</span><strong id="time" role="timer" aria-live="off">30:00</strong></div>
-        <div><span class="label">Lesson stars</span><strong id="stars" aria-live="polite">0</strong></div>
+        <span id="time" role="timer" aria-live="off">30 min left</span>
+        <span id="stars" aria-live="polite" aria-label="Stars this lesson: 0">&#9733; 0</span>
       </div>
-      <progress id="progress" max="7" value="0" aria-label="Lesson steps"></progress>
+      <div id="progress" class="progress" role="progressbar" aria-label="Lesson steps"
+        aria-valuemin="0" aria-valuemax="7" aria-valuenow="0"></div>
     </div>
   </header>
 
@@ -35,12 +37,16 @@
     </section>
     <section id="workspace" class="card" aria-labelledby="heading">
       <h1 id="heading" tabindex="-1">Your math lesson</h1>
-      <p id="prompt"></p>
+      <p id="kind" class="kind"></p>
+      <p id="prompt" class="prompt"></p>
+      <p id="line" class="line"></p>
       <div id="tool"></div>
       <form id="answer" hidden>
         <label for="entry">Your answer</label>
-        <input id="entry" name="entry" autocomplete="off" required>
-        <button>Check answer</button>
+        <div class="answer-row">
+          <input id="entry" name="entry" autocomplete="off" required>
+          <button>Check</button>
+        </div>
       </form>
       <form id="photo" hidden>
         <label for="image">Photo of your notebook</label>
@@ -50,6 +56,7 @@
       <p id="feedback" role="status"></p>
       <div id="help-tool"></div>
       <div id="actions" class="actions"></div>
+      <div id="help-panel" class="help-panel"></div>
     </section>
   </main>
 </body>

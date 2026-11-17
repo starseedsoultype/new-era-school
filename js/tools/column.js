@@ -68,7 +68,9 @@ function makeModel({ op, numbers }) {
   }
 
   record(op === 'mul'
-    ? 'Multiply (умножение) the digits first. Place the decimal point (десятичная запятая) at the end.'
+    ? (scale
+      ? 'Multiply (умножение) the digits first. Place the decimal point (десятичная запятая) at the end.'
+      : 'Multiply (умножение) the digits, one row at a time.')
     : scale
       ? 'Line up the decimal points (десятичные запятые) and start at the right.'
       : 'Line up the place values (разряды) and start at the right.');
@@ -290,12 +292,11 @@ export default {
         return item;
       }
 
-      for (let column = 0; column < width; column++) {
-        svg.append(svgElement('rect', {
-          x: x(column) - 17, y: 12, width: 34, height: canvasHeight - 27, rx: 4,
-          fill: column % 2 ? 'var(--school-page)' : 'var(--school-surface)'
-        }));
-      }
+      // One quiet background for the whole grid keeps the digits easy to read.
+      svg.append(svgElement('rect', {
+        x: 4, y: 8, width: canvasWidth - 8, height: canvasHeight - 16, rx: 12,
+        fill: 'var(--school-grid-bg, var(--school-page))'
+      }));
 
       if (op === 'mul' && rows.length > 3 && step > 0) {
         // Keep operand punctuation visible while partial products use digit columns.
@@ -312,8 +313,15 @@ export default {
         }));
         if (rowIndex === 2 || row.operator) drawText(16, py, row.operator ?? operations[op]);
         row.digits.forEach((value, column) => {
+          if (rowIndex === 0) {
+            // Carries sit in a clear chip above the column they belong to.
+            svg.append(svgElement('rect', {
+              x: x(column) - 14, y: py - 14, width: 28, height: 28, rx: 9,
+              fill: 'var(--school-transfer-bg)', stroke: 'var(--school-transfer)', 'stroke-width': 1.5
+            }));
+          }
           drawText(x(column), py, value, rowIndex === 0
-            ? { fill: 'var(--school-transfer)', 'font-size': 17 }
+            ? { fill: 'var(--school-transfer)', 'font-size': 20, 'font-weight': 700 }
             : {});
         });
         if (row.scale && (rowIndex <= 2 || row.digits.length > row.scale)) {
@@ -516,7 +524,8 @@ export default {
     function updateAnswer() {
       answer = readAnswer();
       finished = false;
-      status.textContent = 'Use a point or a comma for the decimal separator (десятичная запятая).';
+      status.textContent = model.scale
+        ? 'Use a point or a comma for the decimal separator (десятичная запятая).' : '';
       onEvent('changed', getState());
     }
 

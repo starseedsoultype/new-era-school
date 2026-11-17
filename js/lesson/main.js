@@ -1,6 +1,7 @@
 import { schoolApi, schoolClient } from "../core/supabase.js";
 import { requireLogin } from "../core/auth.js";
 import { LessonEngine } from "./engine.js";
+import { SET_HINT } from "./answer.js";
 
 const $ = id => document.getElementById(id);
 const workspace = $("workspace");
@@ -13,6 +14,9 @@ const titles = {
   solo: "Try it on your own", notebook: "Show your work", use: "Use what you learned",
   finish: "Finish the lesson",
 };
+const kindLabels = { example: "Example", rule: "The rule", remark: "Watch out", try: "Your turn" };
+const params = new URL(location.href).searchParams;
+const demoId = params.get("demo") || null;
 let engine;
 let storageKey;
 let busy = false;
@@ -20,6 +24,12 @@ let scene;
 let tool;
 let helpTool;
 let renderEpoch = 0;
+let toolSig = null;
+let toolReady = Promise.resolve(null);
+let helpOpen = false;
+let workedOk = false;
+let lastTitle = "";
+let refocus = -1;
 let completion;
 let nextAutomaticRetry = 0;
 let notice = "";
@@ -38,11 +48,23 @@ function persist() {
 }
 
 function updateHeader() {
+  const total = engine?.lesson.steps.length ?? 7;
+  const now = completion ? total : engine ? engine.index + 1 : 0;
   $("step").textContent = completion ? "Lesson complete" : engine ? titles[engine.step.type] : "Get ready";
-  $("progress").value = engine ? engine.index + 1 : 0;
-  $("stars").textContent = String(completion?.stars_total ?? engine?.stars ?? 0);
+  const bar = $("progress");
+  if (bar.children.length !== total) {
+    bar.replaceChildren(...Array.from({ length: total }, () => document.createElement("span")));
+  }
+  [...bar.children].forEach((part, i) => {
+    part.className = i < now - 1 || completion ? "done" : i === now - 1 ? "now" : "";
+  });
+  bar.setAttribute("aria-valuemax", String(total));
+  bar.setAttribute("aria-valuenow", String(now));
+  const stars = completion?.stars_total ?? engine?.stars ?? 0;
+  $("stars").textContent = `\u2605 ${stars}`;
+  $("stars").setAttribute("aria-label", `Stars this lesson: ${stars}`);
   const seconds = completion ? 0 : engine ? Math.ceil(engine.timer.left().lesson / 1000) : 1800;
-  $("time").textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+  $("time").textContent = `${Math.ceil(seconds / 60)} min left`;
 }
 
 function setBusy(value) {
@@ -66,13 +88,16 @@ async function run(action) {
   }
 }
 
-function button(label, action, secondary = false) {
+function button(label, action, kind = "primary", parent = $("actions")) {
   const node = document.createElement("button");
   node.type = "button";
   node.textContent = label;
-  if (secondary) node.className = "secondary";
-  node.addEventListener("click", () => void run(action));
-  $("actions").append(node);
+  node.className = kind === "primary" ? "big" : "secondary";
+  node.addEventListener("click", () => {
+    refocus = kind === "primary" && parent === $("actions") ? "primary" : -1;
+    void run(action);
+  });
+  parent.append(node);
 }
 
 async function mountTool(host, id, params, mode, step, epoch) {
@@ -82,11 +107,7 @@ async function mountTool(host, id, params, mode, step, epoch) {
     if (epoch !== renderEpoch) return null;
     const instance = definition.mount(host, params, {
       mode, lang: "en", reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
-      onEvent(type, payload) {
-        if (mode === "answer" && type === "done" && payload?.value != null) {
-          void run(() => submit(payload.value));
-        }
-      },
+      onEvent() {},
     });
     if (mode === "show") instance.setStep(step ?? 0);
     if (busy) for (const control of host.querySelectorAll("button, input")) control.disabled = true;
@@ -97,23 +118,60 @@ async function mountTool(host, id, params, mode, step, epoch) {
   }
 }
 
-function setScene(key, title, text = "") {
+function setScene(key, title, keepTool = false) {
   $("heading").textContent = title;
-  $("prompt").textContent = text;
   if (scene === key) return false;
   scene = key;
-  renderEpoch++;
-  tool?.destroy();
-  tool = null;
+  helpOpen = false;
+  workedOk = false;
+  if (!keepTool) {
+    renderEpoch++;
+    tool?.destroy();
+    tool = null;
+    toolSig = null;
+    toolReady = Promise.resolve(null);
+    $("tool").replaceChildren();
+  }
   helpTool?.destroy();
   helpTool = null;
-  $("tool").replaceChildren();
   $("help-tool").replaceChildren();
   $("entry").value = "";
   $("image").value = "";
   lastInput = undefined;
-  $("heading").focus();
+  if (title !== lastTitle) $("heading").focus({ preventScroll: true });
+  lastTitle = title;
   return true;
+}
+
+function setText({ kind = "", prompt = "", line = "" } = {}) {
+  $("kind").textContent = kindLabels[kind] ?? "";
+  $("prompt").textContent = prompt;
+  $("line").textContent = line;
+  $("line").dataset.kind = kind;
+}
+
+function placeTool(id, params, mode, step) {
+  if (!id || !params) return;
+  const epoch = renderEpoch;
+  $("tool").classList.toggle("is-show", mode === "show");
+  toolReady = mountTool($("tool"), id, params, mode, step, epoch).then(instance => {
+    if (epoch === renderEpoch) tool = instance;
+    else instance?.destroy();
+    return instance;
+  });
+}
+
+// Show a tool for a scene. Consecutive lines that use the same picture keep one tool and just move its step.
+function sceneWithTool(key, title, id, params, mode, step) {
+  const sig = JSON.stringify([id, params, mode]);
+  const keep = mode === "show" && scene !== key && sig === toolSig;
+  if (!setScene(key, title, keep)) return;
+  if (keep) {
+    void toolReady.then(instance => instance?.setStep(step ?? 0));
+  } else {
+    toolSig = sig;
+    placeTool(id, params, mode, step);
+  }
 }
 
 async function submit(input) {
@@ -122,11 +180,12 @@ async function submit(input) {
   const result = await engine.submit(input);
   if (input === null) notice = "You can return to this skill in a future lesson.";
   else if (result.is_correct) notice = "That answer is correct.";
-  else notice = engine.mode === "explore" ? "Take a moment to work through the columns."
-    : "Check the digits and try again.";
+  else notice = engine.mode === "explore" ? "Take a moment to work through it step by step."
+    : "Read the task again and check each step.";
 }
 
 async function ask(kind) {
+  helpOpen = false;
   const response = await engine.help(kind, $("entry").value || lastInput);
   notice = response.text ?? "";
   helpTool?.destroy();
@@ -153,35 +212,88 @@ async function jpeg(file) {
   }
 }
 
+const isOk = text => /^(That answer is correct|Yes, that is right)/.test(text);
+
+function plainScene(key, title, text = "") {
+  setText({ prompt: text });
+  setScene(key, title);
+}
+
+function helpPanel(step) {
+  const panel = $("help-panel");
+  panel.replaceChildren();
+  button("I need help", async () => { helpOpen = !helpOpen; }, "secondary");
+  if (!helpOpen) return;
+  const add = (label, action) => button(label, action, "secondary", panel);
+  add("Give me a hint", () => ask("hint"));
+  if (engine.errors) add("Look at my mistake", () => ask("error_review"));
+  add("Explain another way", () => ask("reexplain"));
+  if (engine.canIntervene) {
+    add("I don't get it", async () => {
+      helpOpen = false;
+      notice = "Take your time. There is no rush.";
+      await engine.stuck();
+    });
+  }
+  if (engine.hintLevel >= 2) add("Skip this task", () => submit(null));
+}
+
+function renderScripted(step) {
+  const back = () => { notice = ""; engine.prevScript(); };
+  if (step.type === "explain") {
+    const line = step.script[engine.script];
+    const toolMode = line.kind === "try" || line.tool_mode === "explore" ? "explore" : "show";
+    setText({ kind: line.kind, line: line.text });
+    sceneWithTool(`explain:${engine.script}`, titles.explain, line.tool, line.tool_params, toolMode, line.tool_step);
+    const last = engine.script + 1 >= step.script.length;
+    if (engine.script > 0) button("Back", async () => back(), "secondary");
+    button(last ? "Start practicing" : "Next", async () => { notice = ""; await engine.nextScript(); });
+    return;
+  }
+  const worked = step.worked;
+  const shown = engine.script;
+  const last = engine.workedLast;
+  const part = shown === 0 ? null : worked.steps[Math.min(shown, worked.steps.length) - 1];
+  const text = last ? worked.last_step.text
+    : part ? part.text : "Let's solve this one together. Press Next when you are ready.";
+  setText({ kind: "", prompt: worked.prompt, line: text });
+  sceneWithTool(`worked:${shown}`, titles.together, worked.tool, worked.tool_params, "show", part?.tool_step ?? 0);
+  if (last && !workedOk) {
+    answer.hidden = false;
+    $("entry").placeholder = worked.last_step.answer?.type === "set" ? SET_HINT : "";
+    if (shown > 0) button("Back", async () => back(), "secondary");
+  } else if (last) {
+    button("Continue", async () => { notice = ""; await engine.finishWorked(); });
+  } else {
+    if (shown > 0) button("Back", async () => back(), "secondary");
+    button("Next", async () => { notice = ""; engine.nextWorked(); });
+  }
+}
+
 function render() {
   updateHeader();
   if (!engine) {
     $("feedback").textContent = notice;
+    $("feedback").className = isOk(notice) ? "ok" : "";
     return;
   }
   answer.hidden = true;
   photo.hidden = true;
   $("actions").replaceChildren();
+  $("help-panel").replaceChildren();
   const { step, current, mode } = engine;
   if (completion) {
-    setScene("complete", "Lesson complete", `You earned ${completion.stars_total} stars in this lesson.`);
+    plainScene("complete", "Lesson complete", `You earned ${completion.stars_total} stars in this lesson.`);
   } else if (step.type === "finish") {
-    setScene("finish", "Finish the lesson", "Think of one place where carrying helped you today.");
+    plainScene("finish", "Finish the lesson", step.finish_prompt || "Think of one thing you learned today.");
     button("Finish lesson", closeLesson);
-  } else if (step.type === "explain") {
-    const line = step.script[engine.script];
-    if (setScene(`explain:${engine.script}`, titles.explain, line.text)) {
-      const epoch = renderEpoch;
-      void mountTool($("tool"), line.tool, line.tool_params, "show", line.tool_step, epoch)
-        .then(instance => { if (epoch === renderEpoch) tool = instance; });
-    }
-    button(engine.script + 1 < step.script.length ? "Next part" : "Start practicing",
-      async () => { notice = ""; await engine.nextScript(); });
+  } else if (engine.scripted) {
+    renderScripted(step);
   } else if (!current) {
-    setScene(`pending:${step.type}`, titles[step.type]);
+    plainScene(`pending:${step.type}`, titles[step.type]);
     button("Continue lesson", () => engine.advance());
   } else if (mode === "paused" || mode === "recovery") {
-    setScene(mode, mode === "paused" ? "Lesson paused" : "Ready to return",
+    plainScene(mode, mode === "paused" ? "Lesson paused" : "Ready to return",
       "Take the time you need. An easier problem can help you get started again.");
     button("Return to lesson", async () => {
       notice = "";
@@ -191,17 +303,18 @@ function render() {
   } else {
     const key = `${step.type}:${current.id}:${mode}`;
     const text = step.type === "notebook" ? `${current.prompt} Write your work on paper.` : current.prompt;
-    if (setScene(key, titles[step.type], text)) {
-      const toolMode = mode === "explore" ? "explore" : step.type === "together" ? "answer" : null;
-      if (toolMode && mode !== "answered") {
-        const epoch = renderEpoch;
-        void mountTool($("tool"), current.tool, current.tool_params, toolMode, 0, epoch)
-          .then(instance => { if (epoch === renderEpoch) tool = instance; });
-      }
-    }
+    setText({ prompt: text });
+    // Only one answer box ever: the tool is a picture of the numbers, or the explore mode after "I don't get it".
+    const picture = ["recall", "together", "solo"].includes(step.type) && current.tool_params && mode !== "answered";
+    // Without a tool there is nothing to explore: show the plain task and keep the buttons.
+    if (mode === "explore" && current.tool && current.tool_params) {
+      sceneWithTool(key, titles[step.type], current.tool, current.tool_params, "explore", 0);
+    } else if (mode === "explore") plainScene(key, titles[step.type], text);
+    else if (picture) sceneWithTool(key, titles[step.type], current.tool, current.tool_params, "show", 0);
+    else plainScene(key, titles[step.type], text);
     if (mode === "explore") {
       button("Try the task again", async () => { notice = ""; await engine.continuePractice(); });
-      button("Call mom", () => engine.pause(), true);
+      button("Call mom", () => engine.pause(), "secondary");
     } else if (mode === "answered") {
       button("Continue lesson", async () => { notice = ""; await engine.continue(); });
     } else if (step.type === "notebook") {
@@ -209,26 +322,32 @@ function render() {
       $("image").hidden = Boolean(engine.pendingPhoto);
       $("photo").querySelector("label").hidden = Boolean(engine.pendingPhoto);
       $("photo").querySelector("button").textContent = engine.pendingPhoto ? "Retry photo check" : "Upload photo";
-      button("Continue without photo check", async () => { notice = ""; await engine.continue(); }, true);
+      button("Continue without photo check", async () => { notice = ""; await engine.continue(); }, "secondary");
     } else {
       answer.hidden = false;
-      button("Get a hint", () => ask("hint"), true);
-      if (engine.errors) button("Review my mistake", () => ask("error_review"), true);
-      if (step.type === "together") button("Explain another way", () => ask("reexplain"), true);
-      if (engine.canIntervene) button("I don't get it", async () => {
-        notice = "Work through the columns at your own pace.";
-        await engine.stuck();
-      }, true);
-      button("Skip this task", () => submit(null), true);
+      // Real students get tasks without `answer`, so the label shows only where the task carries its kind (demo).
+      $("entry").placeholder = current.answer?.type === "set" ? SET_HINT : "";
+      helpPanel(step);
     }
   }
   $("feedback").textContent = notice;
+  $("feedback").className = isOk(notice) ? "ok" : "";
+  if (refocus === "primary") $("actions").querySelector(".big")?.focus({ preventScroll: true });
+  refocus = -1;
 }
 
 answer.addEventListener("submit", event => {
   event.preventDefault();
   const input = $("entry").value.trim();
-  if (input) void run(() => submit(input));
+  if (!input) return;
+  if (engine?.step.worked && !engine.current) {
+    // Worked example: the last step is checked here, in the page. It is not a bank task.
+    workedOk = engine.checkWorked(input);
+    notice = workedOk ? "Yes, that is right. Well done!" : "Not quite. Look at the steps again and try once more.";
+    render();
+    return;
+  }
+  void run(() => submit(input));
 });
 
 photo.addEventListener("submit", event => {
@@ -263,24 +382,45 @@ function tick() {
     return;
   }
   if (engine.mode !== "normal" || engine.current) return;
-  if (engine.step.type === "explain" && (!time.lesson || !time.step)) {
+  if (engine.scripted && !engine.holdsScripted(time)) {
     void run(() => engine.advance());
   } else if (engine.step.type === "finish" && (!time.lesson || !time.step)) {
     void run(closeLesson);
   }
 }
 
+async function bootDemo() {
+  try {
+    const { createDemo } = await import("./demo.js");
+    const demo = await createDemo(demoId);
+    $("demo-badge").hidden = false;
+    document.title = "Demo | New Era School";
+    workspace.hidden = false;
+    // No saved progress in demo mode: every visit starts fresh.
+    button("Start lesson", async () => {
+      const result = await demo.api.session("start", { lesson_id: demo.lessonId });
+      engine = new LessonEngine(result, demo.api, {});
+      await engine.advance();
+    });
+  } catch {
+    workspace.hidden = false;
+    notice = "The demo lesson could not be loaded. Check that the content folder is next to the site folder.";
+    render();
+  }
+}
+
 async function boot() {
+  if (demoId) return bootDemo();
   try {
     const client = schoolClient();
     workspace.hidden = true;
     await requireLogin(client, $("login"));
     const api = schoolApi(client);
     const today = await api.session("today");
-    const lessonId = new URL(location.href).searchParams.get("lesson") ?? today.lesson_id;
+    const lessonId = params.get("lesson") ?? today.lesson_id;
     workspace.hidden = false;
     if (!lessonId) {
-      setScene("empty", "You are all caught up", "Your next lesson will appear here when it is ready.");
+      plainScene("empty", "You are all caught up", "Your next lesson will appear here when it is ready.");
       return;
     }
     button(today.open_session_id && lessonId === today.lesson_id ? "Resume lesson" : "Start lesson", async () => {

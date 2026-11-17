@@ -1,4 +1,5 @@
 import { LessonTimer } from "./timer.js";
+import { setMatches } from "./answer.js";
 
 const taskIds = step => step.task_ids ?? (step.task_id ? [step.task_id] : []);
 const interventionSteps = new Set(["together", "solo", "use"]);
@@ -56,7 +57,7 @@ export class LessonEngine {
         this.changeStep(this.lesson.steps.length - 1);
         return;
       }
-      if (this.step.type === "explain" && time.step) return;
+      if (this.holdsScripted(time)) return;
       const ids = this.step.type === "recall"
         ? [...new Set([...this.extra, ...taskIds(this.step)])]
         : taskIds(this.step);
@@ -78,6 +79,42 @@ export class LessonEngine {
     this.errors = 0;
     this.hintLevel = 0;
     this.pendingPhoto = null;
+  }
+
+  // Explain and worked-example steps are written ahead of time and wait for the child.
+  get scripted() { return this.step.type === "explain" || Boolean(this.step.worked); }
+  get workedLast() { return Boolean(this.step.worked) && this.script > this.step.worked.steps.length; }
+
+  holdsScripted(time = this.timer.left()) {
+    if (!this.scripted || !time.lesson) return false;
+    return Boolean(time.step) || this.workedLast;
+  }
+
+  prevScript() {
+    if (this.scripted && this.script > 0) this.script--;
+  }
+
+  // Worked example: script 0 = the problem, 1..n = steps shown, n + 1 = the child's own last step.
+  nextWorked() {
+    if (this.step.worked && this.script <= this.step.worked.steps.length) this.script++;
+  }
+
+  checkWorked(input) {
+    const expected = this.step.worked?.last_step?.answer;
+    if (!expected) return false;
+    if (expected.type === "set") return setMatches(input, expected.value);
+    const clean = value => String(value).replace(/\s+/g, "").replace(",", ".");
+    const a = clean(input);
+    const b = clean(expected.value);
+    if (expected.type === "int" || expected.type === "decimal") {
+      return a !== "" && Number.isFinite(Number(a)) && Number(a) === Number(b);
+    }
+    return a === b;
+  }
+
+  async finishWorked() {
+    this.changeStep(this.index + 1);
+    await this.advance();
   }
 
   async nextScript() {
@@ -124,7 +161,7 @@ export class LessonEngine {
       if (kind === "hint") this.hintLevel = level;
       return result;
     } catch {
-      return { text: "The teacher is unavailable. You can keep working or skip this task." };
+      return { text: "The teacher is unavailable. You can keep working on it." };
     }
   }
 

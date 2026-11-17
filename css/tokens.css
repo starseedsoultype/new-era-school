@@ -9,6 +9,13 @@
   --school-accent: #14569c;
   --school-transfer: #903b08;
   --school-transfer-bg: #fff0d5;
+  --school-grid-bg: #f3f7fb;
+  --school-rule-bg: #e4f1ff;
+  --school-note-bg: #fff6e3;
+  --school-note-ink: #5b3a06;
+  --school-ok-bg: #e3f6e8;
+  --school-ok-ink: #14532d;
+  --school-radius: 1.25rem;
   --school-font: system-ui, sans-serif;
   --school-number-font: ui-monospace, monospace;
 }
