@@ -13,6 +13,8 @@ const C = {
   green: tone('green', '--school-ok-bg'), yellow: tone('yellow', '--school-note-bg'),
   purple: tone('purple', '--school-active'), brown: tone('brown', '--school-note-bg'),
   wood: tone('wood', '--school-note-bg'), orange: tone('orange', '--school-transfer-bg'),
+  steel: tone('steel', '--school-active'), tile: tone('tile', '--school-icon-red'),
+  slate: tone('slate', '--school-muted'),
   ink: 'var(--school-ink)', white: 'var(--school-surface)'
 };
 const O = 'stroke="' + C.line + '" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"';
@@ -58,6 +60,28 @@ const ICONS = {
   quad: { shape: true, draw: dark => '<path d="M3.8 16.6 L7.6 5.6 L19.8 5 L21 17 Z" ' + f(dark ? C.ink : C.white, dark ? 'stroke-width="2.6"' : '') + '/>' }
 };
 
+// A house: walls, a door, a window and a gable roof. Three roofs, told apart at a glance by colour AND texture:
+// metal is smooth steel-blue with straight seams, tile is warm red-brown with rows of scales, slate is grey and wavy.
+const ROOFS = { metal: 'metal roof', tile: 'tile roof', slate: 'slate roof' };
+const ROOF_SHAPE = 'M1.8 12.8 L12 2.4 L22.2 12.8 Z';
+// Texture lines are thinner than the outline so that they stay readable when the picture is small.
+const fine = d => '<path d="' + d + '" fill="none" stroke="' + C.line + '" stroke-width="0.9" stroke-opacity="0.8" stroke-linecap="round" stroke-linejoin="round"/>';
+const roofDraw = roof => {
+  if (roof === 'tile') {
+    return path(ROOF_SHAPE, C.tile) + fine('M8.2 6.2H15.8M6 8.4H18M3.8 10.6H20.2M10 6.2V8.4M14 6.2V8.4M8 8.4V10.6M12 8.4V10.6M16 8.4V10.6'
+      + 'M6 10.6V12.5M10 10.6V12.5M14 10.6V12.5M18 10.6V12.5');
+  }
+  if (roof === 'slate') {
+    const waves = (y, x0, n) => 'M' + x0 + ' ' + y + ' q1.2 -1.8 2.4 0' + ' t2.4 0'.repeat(n - 1);
+    return path(ROOF_SHAPE, C.slate) + fine(waves(6.6, 8.4, 3) + waves(9, 6, 5) + waves(11.4, 3.6, 7));
+  }
+  return path(ROOF_SHAPE, C.steel) + fine('M12 3.4V12.4M8 6.6V12.4M16 6.6V12.4');
+};
+ICONS.house = { caption: 'house', roofs: ROOFS,
+  draw: (dark, item) => rect(4.5, 12.4, 15, 8.8, 1.6, C.white) + rect(10.2, 15.4, 3.6, 5.8, 1.3, C.wood)
+    + rect(6.2, 14.4, 2.8, 2.6, 0.8, C.yellow) + rect(15, 14.4, 2.8, 2.6, 0.8, C.yellow)
+    + roofDraw(item && item.roof) };
+
 function esc(value) {
   return String(value).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
 }
@@ -83,12 +107,15 @@ function normalize(params, mode) {
     const def = ICONS[kind];
     const text = raw.text == null ? null : String(raw.text);
     if (kind === 'text' && text === null) throw new TypeError('A text item needs "text".');
+    const roof = kind === 'house' ? String(raw.roof ?? 'metal') : null;
+    if (roof !== null && !ROOFS[roof]) throw new TypeError('roof must be metal, tile or slate.');
     const label = raw.label != null ? String(raw.label)
+      : roof ? ROOFS[roof]
       : def?.shape ? (color === 'dark' ? 'dark ' : 'light ') + (kind === 'quad' ? 'quadrilateral' : kind)
         : def ? def.caption : null;
     return {
-      id: String(raw.id ?? 'i' + k), kind, color, text, label,
-      value: String(raw.value ?? (kind === 'text' ? text : raw.label ?? def.caption ?? kind)),
+      id: String(raw.id ?? 'i' + k), kind, color, text, label, roof,
+      value: String(raw.value ?? (kind === 'text' ? text : raw.label ?? (roof ? ROOFS[roof] : def.caption) ?? kind)),
       in: raw.in, start: raw.start
     };
   });
@@ -425,7 +452,7 @@ export default {
         const def = ICONS[item.kind];
         const dark = item.color === 'dark';
         markup += '<g filter="url(#ss-soft-' + id + ')"><g transform="translate(0,' + iconY + ') scale(' + 2.4 * s + ') translate(-12,-12)">'
-          + def.draw(dark) + '</g></g>';
+          + def.draw(dark, item) + '</g></g>';
         if (item.text) markup += '<text x="0" y="' + (iconY + 1) + '" text-anchor="middle" dominant-baseline="central" '
           + 'font-size="' + 18 * s + '" font-weight="700" fill="' + (dark ? C.white : C.ink) + '">'
           + esc(item.text) + '</text>';

@@ -18,7 +18,9 @@ The tool draws sets as ovals with a name tab on the outline. Elements are number
 | `symbol` | `true`/`false` | `empty` layout: draw ∅ in the oval at the shade step (default `true`) |
 | `title` | string | Accessible name of the picture |
 
-**Item fields.** `kind`: `text` (default; shows `text`), furniture `table` `chair` `bed` `wardrobe` `lamp`, mushrooms `porcini` (white mushroom) `amanita` (fly agaric) `chanterelle`, fruit `apple` `pear` `plum`, figures `triangle` `square` `circle` `quad` (an irregular quadrilateral). Also: `id` (default `i0`, `i1`, …), `text` (required for `text`; on a figure it is written on the picture), `label` (caption under the picture; defaults to the English name, for figures to e.g. `dark triangle`; long names wrap onto two lines), `color` (`dark` or `light`, figures only), `value` (what `getState` returns for this element; defaults to `text`, else `label`, else the name), `in` (names of the sets the element belongs to; for `subset` the `select` list is the shortcut; for `overlap` give `["A"]`, `["B"]` or both ids), `start` (region where the element starts in `explore`/`answer`).
+**Item fields.** `kind`: `text` (default; shows `text`), furniture `table` `chair` `bed` `wardrobe` `lamp`, mushrooms `porcini` (white mushroom) `amanita` (fly agaric) `chanterelle`, fruit `apple` `pear` `plum`, a house `house` (see below), figures `triangle` `square` `circle` `quad` (an irregular quadrilateral). Also: `roof` (`house` only: `metal`, `tile` or `slate`; default `metal`), `id` (default `i0`, `i1`, …), `text` (required for `text`; on a figure it is written on the picture), `label` (caption under the picture; defaults to the English name, for figures to e.g. `dark triangle`; long names wrap onto two lines), `color` (`dark` or `light`, figures only), `value` (what `getState` returns for this element; defaults to `text`, else `label`, else the name), `in` (names of the sets the element belongs to; for `subset` the `select` list is the shortcut; for `overlap` give `["A"]`, `["B"]` or both ids), `start` (region where the element starts in `explore`/`answer`).
+
+**House.** `{ "kind": "house", "roof": "tile" }` draws a small house with a door and two windows. The roof tells the houses apart at a glance: `metal` is smooth and steel-blue with straight seams, `tile` is warm red-brown with rows of tiles, `slate` is grey and wavy. The caption defaults to `metal roof`, `tile roof` or `slate roof`; `value` defaults to the caption. Colours come from `--school-icon-steel`, `--school-icon-tile`, `--school-icon-slate` in `css/tokens.css` (fallbacks: `--school-active`, `--school-icon-red`, `--school-muted`). Three classes of houses are shown one class at a time: a `subset` picture per class (`select` the houses of that class, `steps: ["items", "move"]`), because the tool draws at most two ovals.
 
 **Regions.** `single` and `empty`: `A`. `subset`: `outer` (inside the big oval, outside the small one), `inner`. `overlap`: `A` (left only), `both`, `B` (right only).
 
@@ -36,6 +38,15 @@ Multiples of 5, checked one by one (numbers are text tiles; `value` is what the 
 { "layout": "subset", "sets": [{ "label": "{12, 15, 20}" }, { "label": "multiples of 5" }],
   "items": [{ "text": "12" }, { "text": "15" }, { "text": "20" }], "select": ["15", "20"],
   "steps": ["items", "check_each", "shade"] }
+```
+
+Houses of a village, the metal roofs moving into their own oval:
+
+```json
+{ "layout": "subset", "sets": [{ "label": "Village houses" }, { "label": "Metal roofs" }],
+  "items": [{ "kind": "house", "roof": "metal", "id": "h1" }, { "kind": "house", "roof": "tile", "id": "h2" },
+    { "kind": "house", "roof": "slate", "id": "h3" }, { "kind": "house", "roof": "metal", "id": "h4" }],
+  "select": ["h1", "h4"], "steps": ["items", "move"] }
 ```
 
 A task picture (no answer inside the params; the picture only shows the elements):
@@ -90,4 +101,4 @@ Under the picture: the region buttons, **Start again**, and in `answer` also **U
 
 ## Run the demo
 
-From the archive root, run `python3 -m http.server 8000` and open `http://localhost:8000/site/js/tools/demo.html?tool=sets`. The example list has furniture, mushrooms, fruit, multiples of 5, the figures of the book, a whole set, an empty oval and two crossing ovals. Pick **Show**, **Explore** or **Answer**.
+From the archive root, run `python3 -m http.server 8000` and open `http://localhost:8000/site/js/tools/demo.html?tool=sets`. The example list has furniture, mushrooms, fruit, village houses with three kinds of roofs, multiples of 5, the figures of the book, a whole set, an empty oval and two crossing ovals. Pick **Show**, **Explore** or **Answer**.

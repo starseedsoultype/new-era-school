@@ -30,6 +30,9 @@
   --school-icon-yellow: #f7da7a;
   --school-icon-green: #97d2a0;
   --school-icon-purple: #bba6e3;
+  --school-icon-steel: #b4c8de;
+  --school-icon-tile: #d17a5e;
+  --school-icon-slate: #a3adb9;
 }
 
 /* Terminal palette: the lesson screen looks like a programmer's terminal. Pictures from the tools keep the soft light tokens above and sit on a light card. All text pairs are at least 4.5:1 (checked on --term-bg and --term-panel). */
