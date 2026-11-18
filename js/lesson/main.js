@@ -2,6 +2,7 @@ import { schoolApi, schoolClient } from "../core/supabase.js";
 import { requireLogin } from "../core/auth.js";
 import { LessonEngine } from "./engine.js";
 import { SET_HINT } from "./answer.js";
+import { nextLessonPage } from "./nav.js";
 
 const $ = id => document.getElementById(id);
 const workspace = $("workspace");
@@ -104,14 +105,14 @@ function focusEntry() {
   if (matchMedia("(pointer: fine)").matches) $("entry").focus({ preventScroll: true });
 }
 
-function button(label, action, kind = "primary", parent = $("actions")) {
+function button(label, action, kind = "primary", parent = $("actions"), lead = null) {
   const node = document.createElement("button");
   node.type = "button";
   node.className = `cmd ${kind === "primary" ? "big" : "secondary"}`;
   const mark = (cls, text) => Object.assign(document.createElement("span"), { className: cls, textContent: text, ariaHidden: "true" });
   // Command look: "> next \u23CE", "< back", "$ give me a hint". The label stays real text for readers.
-  const lead = kind === "primary" ? "> " : label === "Back" ? "< " : "$ ";
-  node.append(mark("pre", lead), label);
+  const mark0 = lead ?? (kind === "primary" ? "> " : label === "Back" ? "< " : "$ ");
+  node.append(mark("pre", mark0), label);
   if (kind === "primary") node.append(mark("suf", " \u23CE"));
   node.addEventListener("click", () => {
     refocus = kind === "primary" && parent === $("actions") ? "primary" : -1;
@@ -381,10 +382,18 @@ function render() {
   $("help-panel").replaceChildren();
   const { step, current, mode } = engine;
   if (completion) {
-    plainScene("complete", "Lesson complete", `You earned ${completion.stars_total} stars in this lesson.`);
+    if (completion.completed) {
+      plainScene("complete", "Lesson complete", `You earned ${completion.stars_total} stars in this lesson.`);
+      button("next lesson", goNext);
+    } else {
+      // Closed by the timer: the lesson is not finished and comes back as today's lesson.
+      plainScene("timeup", "Time is up", `You earned ${completion.stars_total} stars. This lesson is not finished yet: you can go through it again.`);
+      button("start again", async () => { location.href = "lesson.html"; });
+    }
+    button("my stars", () => { location.href = "student.html"; }, "secondary", $("actions"), "> ");
   } else if (step.type === "finish") {
     plainScene("finish", "Finish the lesson", step.finish_prompt || "Think of one thing you learned today.");
-    button("Finish lesson", closeLesson);
+    button("Finish lesson", () => closeLesson(true));
   } else if (engine.scripted) {
     renderScripted(step);
   } else if (!current) {
@@ -466,9 +475,19 @@ photo.addEventListener("submit", event => {
   });
 });
 
-async function closeLesson() {
+// "> next lesson": the server counts the lesson just closed, so "today" is now the following one.
+async function goNext() {
   notice = "";
-  completion = await engine.finish();
+  if (demoId) { notice = "Demo: the next lesson is not linked here."; return; }
+  const page = await nextLessonPage(feedbackApi, lessonId);
+  if (page) location.href = page;
+  else notice = "Next lesson is not ready yet";
+}
+
+// finished = the student pressed "Finish lesson" himself. Timer closes pass false.
+async function closeLesson(finished = false) {
+  notice = "";
+  completion = { ...(await engine.finish(finished)), completed: finished };
 }
 
 function tick() {

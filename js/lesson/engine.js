@@ -26,6 +26,12 @@ export class LessonEngine {
       ? "recovery" : (saved.mode ?? "normal");
     this.timer = new LessonTimer(Date.parse(state.started_at) || now(), now, saved.timer);
     if (!saved.timer) this.timer.startStep(this.step.budget_sec);
+    // Reopened after its 30 minutes ran out while the page was closed (the clock counted the hours in between):
+    // give a fresh window now, otherwise the first answer ends the lesson at once.
+    if (this.mode !== "paused" && !this.timer.left().lesson) {
+      this.timer.lessonEnd = now() + 1800000;
+      this.timer.startStep(this.step.budget_sec);
+    }
     if (this.mode === "paused") this.timer.pause();
     if (this.mode === "recovery") this.timer.resume();
     this.extra = state.recall_extra ?? [];
@@ -232,11 +238,12 @@ export class LessonEngine {
     await this.nextTask();
   }
 
-  async finish() {
+  // completed = true only when the student pressed finish himself; a timer close sends false (no +5 for the lesson).
+  async finish(completed = true) {
     const unissued = this.lesson.steps.filter(step => step.type === "solo")
       .flatMap(taskIds).filter(id => !this.issued.has(id));
     this.result = await this.api.session("finish", {
-      session_id: this.id, completed: true, unissued_task_ids: unissued,
+      session_id: this.id, completed, unissued_task_ids: unissued,
     });
     this.stars = this.result.stars_total;
     return this.result;

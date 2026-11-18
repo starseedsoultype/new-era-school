@@ -8,6 +8,7 @@ const REASONS = {
   lesson_completed: "Lesson finished",
   returned_after_pause: "Came back after a break",
   mastered: "Skill mastered",
+  repeat_stars: "Practice again",
 };
 const FAILS = {
   not_enough: "You do not have that many stars to spend right now.",
@@ -61,11 +62,17 @@ function renderLessons() {
   const mark = { done: "✔", today: "▶", next: "·" };
   $("lessons").replaceChildren(...(shown.length ? shown.map(l => h("li", { class: `lesson-row ${l.state}` },
     h("span", { class: "lead" }, `${mark[l.state]} ${l.number}`),
-    h("span", { class: "what" }, l.title ?? `Lesson ${l.number}`),
+    h("span", { class: "what" }, l.title ?? `Lesson ${l.number}`,
+      l.unfinished && l.state !== "done" ? h("span", { class: "sub" }, " · not finished") : null),
     l.state === "today"
       ? h("a", { class: "cmd-link", href: "lesson.html" }, h("span", { class: "pre", "aria-hidden": "true" }, "> "), "open",
           h("span", { class: "suf", "aria-hidden": "true" }, " ⏎"))
-      : h("span", { class: "when" }, l.state === "done" ? "done" : "next"))) : [h("li", { class: "empty" }, "No lessons yet.")]));
+      : l.state === "done"
+        // Repeat: a new session for this lesson; stars for answers follow the usual rules, no second lesson reward.
+        ? h("a", { class: "cmd-link", href: `lesson.html?lesson=${encodeURIComponent(l.id)}` },
+            h("span", { class: "pre", "aria-hidden": "true" }, "> "), "again",
+            h("span", { class: "suf", "aria-hidden": "true" }, " ⏎"))
+        : h("span", { class: "when" }, "next"))) : [h("li", { class: "empty" }, "No lessons yet.")]));
   const hidden = list.length - shown.length;
   $("lessons-more").replaceChildren(...(hidden > 0 || allLessons
     ? [cmd(allLessons ? "fewer" : `all lessons (${list.length})`, () => { allLessons = !allLessons; renderLessons(); }, { secondary: true })]

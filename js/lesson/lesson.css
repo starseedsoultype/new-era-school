@@ -78,7 +78,8 @@ body {
 }
 #time { color: var(--term-accent); }
 #stars { color: var(--term-amber); text-decoration: none; }
-#stars:hover { text-decoration: underline; }
+#stars:hover, #lessons:hover { text-decoration: underline; }
+#lessons { color: var(--term-accent); text-decoration: none; }
 .step-name { font-weight: 400; color: var(--term-text); }
 
 .progress { display: flex; gap: .25rem; padding: 0; height: .25rem; background: var(--term-panel); }
