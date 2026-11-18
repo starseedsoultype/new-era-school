@@ -9,6 +9,7 @@ const STATUS_RU = { new: "new", seen: "seen", done: "done" };
 
 let session;
 let data = null;
+let photos = { pending: 0, list: [], failed: false };
 let busy = false;
 let rateFilled = false;
 const notice = $("notice");
@@ -34,6 +35,7 @@ function renderSummary() {
   $("summary").replaceChildren(
     h("li", {}, "Уроков пройдено: ", b(`${s.lessons_done} из ${s.lessons_total}`)),
     h("li", {}, "Звёзд за последние 7 дней: ", b(`★ ${num(s.stars_week)}`)),
+    h("li", {}, "Фото ждут проверки: ", b(photos.failed ? "не удалось загрузить" : String(photos.pending))),
     h("li", {}, "Баланс ученика: ", b(`★ ${num(t.available)}`), ` свободно (заработано ${num(t.earned)}, выдано ${num(t.given)}, ждёт выдачи ${num(t.reserved)})`));
 }
 
@@ -49,6 +51,42 @@ function renderRequests() {
       r.status === "requested"
         ? h("span", { class: "row-actions" }, cmd("given", event => onGiven(r, event.currentTarget))) : null);
   }) : [h("li", { class: "empty" }, "Запросов пока нет.")]));
+}
+
+const VERDICT_SHOWN = { true: "верно", false: "неверно" };
+
+function verdictLine(v) {
+  if (!v || typeof v !== "object") return h("span", { class: "none" }, "модель не проверила");
+  const result = v.correct === true || v.correct === false ? VERDICT_SHOWN[v.correct] : "не видно";
+  return h("span", { class: "verdict" }, `модель: ${result}, ${v.neat ? "аккуратно" : "неаккуратно"}`,
+    v.comment ? h("span", { class: "sub" }, ` \u2014 ${v.comment}`) : null);
+}
+
+function openPhoto(url) {
+  const dialog = $("photo-view");
+  $("photo-big").src = url;
+  if (dialog.showModal) dialog.showModal(); else dialog.setAttribute("open", "");
+}
+
+function renderPhotos() {
+  const list = photos.list;
+  if (photos.failed) {
+    $("photos").replaceChildren(h("li", { class: "empty" }, "Не удалось загрузить фото. Нажмите refresh."));
+    return;
+  }
+  $("photos").replaceChildren(...(list.length ? list.map(p => h("li", { class: p.reviewed ? "photo" : "photo fresh" },
+    p.url
+      ? h("button", { class: "thumb", type: "button", title: "Открыть крупно", "aria-label": "Открыть фото крупно",
+          onclick: () => openPhoto(p.url) }, h("img", { src: p.url, alt: "Фото тетради", loading: "lazy" }))
+      : h("span", { class: "thumb none" }, "нет картинки"),
+    h("span", { class: "info" },
+      h("span", { class: "meta" }, h("span", { class: `tag ${p.reviewed ? "done" : "new"}` }, p.reviewed ? "проверено" : "новое"),
+        [fmtWhen(p.created_at, "ru"), p.lesson_number ? `урок ${p.lesson_number}` : null, `задание ${p.task_id}`]
+          .filter(Boolean).join(" \u00b7 ")),
+      p.prompt ? h("span", { class: "text" }, p.prompt) : null,
+      verdictLine(p.model_verdict),
+      p.reviewed ? null : h("span", { class: "row-actions" }, cmd("проверено", event => onPhoto(p, event.currentTarget)))
+    ))) : [h("li", { class: "empty" }, "Фото пока нет.")]));
 }
 
 function renderFeedback() {
@@ -111,6 +149,8 @@ async function run(button, work, okText, failText) {
 
 const onGiven = (row, button) => run(button, () => session.call("give", { id: row.id }),
   `Отмечено: выдано ${num(row.stars)} ★.`, "Не удалось отметить. Проверьте соединение и попробуйте ещё раз.");
+const onPhoto = (row, button) => run(button, () => session.call("photo_reviewed", { id: row.id }),
+  "Фото отмечено как проверенное.", "Не удалось отметить. Проверьте соединение и попробуйте ещё раз.");
 const onSeen = (row, button) => run(button, () => session.call("seen", { id: row.id }),
   "Жалоба отмечена как просмотренная.", "Не удалось отметить. Проверьте соединение и попробуйте ещё раз.");
 
@@ -133,8 +173,13 @@ async function load() {
     data = { totals: { earned: 0, given: 0, reserved: 0, available: 0 }, rate: next.rate, redemptions: [], feedback: [],
       summary: { lessons_done: 0, lessons_total: 0, stars_week: 0 } };
   } else data = next;
+  try {
+    const next = await session.call("photos");
+    photos = { pending: next.pending, list: next.photos, failed: false };
+  } catch { photos = { pending: 0, list: [], failed: true }; }
   renderTop();
   renderSummary();
+  renderPhotos();
   renderRequests();
   renderRate();
   renderFeedback();

@@ -100,3 +100,23 @@ a.cmd-link .pre, a.cmd-link .suf { color: var(--term-green); white-space: pre; }
   .rate-line .cmd-input.wide { flex: 1 1 8rem; width: auto; }
   #to-lesson { margin-left: 0; }
 }
+
+/* Notebook photos (parent page) */
+.rows.photos > li { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: .3rem .8rem; align-items: start; }
+.photos .thumb { display: block; width: 8rem; height: 6rem; padding: 0; border: 1px solid var(--term-muted); background: transparent;
+  color: var(--term-muted); cursor: zoom-in; overflow: hidden; font: inherit; font-size: .85rem; }
+.photos .thumb.none { display: flex; align-items: center; justify-content: center; cursor: default; }
+.photos .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photos .info { display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
+.photos .meta { display: flex; flex-wrap: wrap; align-items: center; gap: .2rem .7rem; font-size: .85rem; color: var(--term-muted); }
+.photos .text { font-size: .95rem; }
+.photos .verdict .sub, .photos .none { color: var(--term-muted); }
+.photos .fresh { border-left: 3px solid var(--term-amber); padding-left: .6rem; }
+.photos .row-actions { grid-column: auto; margin-top: .2rem; }
+.photo-view { max-width: 96vw; max-height: 96vh; padding: .6rem; border: 1px solid var(--term-muted); background: #000; color: inherit; }
+.photo-view::backdrop { background: rgba(0, 0, 0, .8); }
+.photo-view img { display: block; max-width: 90vw; max-height: 80vh; margin: 0 auto .6rem; }
+@media (max-width: 520px) {
+  .rows.photos > li { grid-template-columns: 5.5rem minmax(0, 1fr); }
+  .photos .thumb { width: 5.5rem; height: 4.5rem; }
+}

@@ -10,6 +10,12 @@ function fail(status, error, reason = null) {
   return e;
 }
 
+// Invented notebook "photos": plain SVG pictures, so nothing real is needed.
+const sheet = (text, tone) => "data:image/svg+xml;utf8," + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480"><rect width="640" height="480" fill="${tone}"/>` +
+  [60, 120, 180, 240, 300, 360, 420].map(y => `<line x1="0" y1="${y}" x2="640" y2="${y}" stroke="#9db4d0" stroke-width="1"/>`).join("") +
+  `<text x="40" y="110" font-size="44" font-family="monospace" fill="#223">${text}</text></svg>`);
+
 export function demoServer(role, options = {}) {
   const state = {
     rate: options.noRate ? null : { stars: 100, amount: 80, unit: "Robux" },
@@ -47,6 +53,17 @@ export function demoServer(role, options = {}) {
       { id: "M-008", number: 8, title: "Multiplication tables", state: "next" },
     ],
   };
+  state.photos = [
+    { id: "p0000000-0000-4000-8000-000000000001", url: sheet("12 x 4 = 48", "#f6f1e4"), created_at: iso(20 * MIN),
+      lesson_id: "M-003", lesson_number: 3, task_id: "S1-b-011", prompt: "Find the union of the sets A and B.",
+      model_verdict: null, reviewed: false },
+    { id: "p0000000-0000-4000-8000-000000000002", url: sheet("A ∩ B = {2, 5}", "#eef3e6"), created_at: iso(DAY + 10 * MIN),
+      lesson_id: "M-002", lesson_number: 2, task_id: "S1-g-004", prompt: "Write the intersection of two sets.",
+      model_verdict: { correct: true, neat: true, comment: "Clear work, the common elements are found calmly." }, reviewed: false },
+    { id: "p0000000-0000-4000-8000-000000000003", url: sheet("?", "#f3e9e9"), created_at: iso(2 * DAY),
+      lesson_id: "M-001", lesson_number: 1, task_id: "S1-a-002", prompt: "Which of the sets is a subset of the other?",
+      model_verdict: { correct: null, neat: false, comment: "The photo is dark, the solution is hard to see." }, reviewed: true },
+  ];
   if (role === "parent") {
     state.redemptions.push({ id: "r0000000-0000-4000-8000-000000000002", stars: 37, status: "requested",
       created_at: iso(50 * MIN), given_at: null, rate: { ...state.rate } });
@@ -82,6 +99,17 @@ export function demoServer(role, options = {}) {
       need("parent");
       return { student: true, totals: totals(), rate: state.rate, redemptions: sortedRequests().slice(0, 30),
         feedback: state.feedback, summary: { lessons_done: 2, lessons_total: 40, stars_week: 91 } };
+    }
+    if (action === "photos") {
+      need("parent");
+      return { pending: state.photos.filter(p => !p.reviewed).length, photos: state.photos };
+    }
+    if (action === "photo_reviewed") {
+      need("parent");
+      const row = state.photos.find(p => p.id === fields.id);
+      if (!row) throw fail(403, "forbidden");
+      row.reviewed = true;
+      return { ok: true };
     }
     if (action === "give") {
       need("parent");

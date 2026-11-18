@@ -47,6 +47,9 @@
         <h2 class="kind">сводка</h2>
         <ul id="summary" class="rows plain"></ul>
 
+        <h2 class="kind">фото тетради</h2>
+        <ul id="photos" class="rows photos"></ul>
+
         <h2 class="kind">запросы на обмен</h2>
         <ul id="requests" class="rows requests"></ul>
 
@@ -60,5 +63,9 @@
       </section>
     </main>
   </div>
+  <dialog id="photo-view" class="photo-view" aria-label="Фото тетради">
+    <img id="photo-big" alt="Фото тетради крупно">
+    <form method="dialog"><button class="cmd secondary"><span class="pre" aria-hidden="true">&gt; </span>закрыть<span class="suf" aria-hidden="true"> &#9166;</span></button></form>
+  </dialog>
 </body>
 </html>

@@ -8,7 +8,7 @@ const $ = id => document.getElementById(id);
 const workspace = $("workspace");
 const answer = $("answer");
 const photo = $("photo");
-const toolIds = new Set(["column", "sets", "fraction_bars", "number_line", "area_grid",
+const toolIds = new Set(["column", "sets", "lines", "fraction_bars", "number_line", "area_grid",
   "percent_bar", "balance", "cubes", "protractor"]);
 const titles = {
   recall: "Warm up", explain: "See how it works", together: "Work together",
