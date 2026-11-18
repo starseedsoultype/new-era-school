@@ -8,13 +8,13 @@ The tool draws sets as ovals with a name tab on the outline. Elements are number
 
 | Field | Accepted values | Meaning |
 | --- | --- | --- |
-| `layout` | `single`, `subset`, `overlap`, `empty` | One oval · a small oval inside a big one · two crossing ovals · one empty (dashed) oval |
-| `sets` | Array of `{ id?, label }`; 1 for `single`/`empty`, 2 for `subset` (outer first, inner second) and `overlap` (left, right) | Ovals and their name tabs. `id` defaults to `A`, `B` |
+| `layout` | `single`, `subset`, `overlap`, `pair`, `empty` | One oval · a small oval inside a big one · two crossing ovals · two separate ovals side by side (for sorting into two groups; added 18.11.2026) · one empty (dashed) oval |
+| `sets` | Array of `{ id?, label }`; 1 for `single`/`empty`, 2 for `subset` (outer first, inner second), `overlap` and `pair` (left, right) | Ovals and their name tabs. `id` defaults to `A`, `B` |
 | `items` | Array of items (below) | Elements. `empty` takes none |
 | `select` | Array of item `id`s or values | `subset` only: the elements that belong to the small oval |
 | `steps` | Array of step names (below) | Show steps. Default depends on the layout |
 | `shade` | `inner`, `intersection`, `A`, `B`, `union`, `all` | What the last `shade` step highlights. Defaults: `inner` for `subset`, `intersection` for `overlap`, `all` otherwise |
-| `answerRegions` | Array of region names | Which regions `getState()` collects in `explore` and `answer`. Defaults: `["inner"]` for `subset`, `["both"]` for `overlap`, `["A"]` for `single` |
+| `answerRegions` | Array of region names | Which regions `getState()` collects in `explore` and `answer`. Defaults: `["inner"]` for `subset`, `["both"]` for `overlap`, `["A"]` for `single` and `pair` |
 | `symbol` | `true`/`false` | `empty` layout: draw ∅ in the oval at the shade step (default `true`) |
 | `title` | string | Accessible name of the picture |
 
@@ -22,7 +22,7 @@ The tool draws sets as ovals with a name tab on the outline. Elements are number
 
 **House.** `{ "kind": "house", "roof": "tile" }` draws a small house with a door and two windows. The roof tells the houses apart at a glance: `metal` is smooth and steel-blue with straight seams, `tile` is warm red-brown with rows of tiles, `slate` is grey and wavy. The caption defaults to `metal roof`, `tile roof` or `slate roof`; `value` defaults to the caption. Colours come from `--school-icon-steel`, `--school-icon-tile`, `--school-icon-slate` in `css/tokens.css` (fallbacks: `--school-active`, `--school-icon-red`, `--school-muted`). Three classes of houses are shown one class at a time: a `subset` picture per class (`select` the houses of that class, `steps: ["items", "move"]`), because the tool draws at most two ovals.
 
-**Regions.** `single` and `empty`: `A`. `subset`: `outer` (inside the big oval, outside the small one), `inner`. `overlap`: `A` (left only), `both`, `B` (right only).
+**Regions.** `single` and `empty`: `A`. `subset`: `outer` (inside the big oval, outside the small one), `inner`. `overlap`: `A` (left only), `both`, `B` (right only). `pair`: `A` (left oval), `B` (right oval); on a narrow screen the ovals stack, `A` on top.
 
 Example, the chairs of a room:
 
@@ -55,6 +55,13 @@ A task picture (no answer inside the params; the picture only shows the elements
 { "layout": "subset", "sets": [{ "label": "Figures" }, { "label": "Dark figures" }],
   "items": [{ "kind": "triangle", "label": "A" }, { "kind": "triangle", "color": "dark", "label": "B" }],
   "steps": ["items"] }
+```
+
+Sorting into two separate groups (items start in the right oval, the student moves the living ones left; the answer is the left oval):
+
+```json
+{ "layout": "pair", "sets": [{ "id": "A", "label": "living" }, { "id": "B", "label": "non-living" }],
+  "items": [{ "text": "ant", "start": "B" }, { "text": "stone", "start": "B" }], "answerRegions": ["A"] }
 ```
 
 Two crossing ovals:

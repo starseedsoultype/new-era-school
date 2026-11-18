@@ -164,6 +164,11 @@ p:empty, .actions:empty, .help-panel:empty, #tool:empty, #help-tool:empty { disp
 .tool-card :is(button, input):disabled { opacity: .65; cursor: wait; }
 /* Picture mode: the line above already says what happens, so keep the picture alone. */
 #tool.is-show [role="status"] { display: none; }
+/* Lesson video (contract 5А, field "video" of an explain line). */
+#tool:has(.video-card) { padding: 0; background: transparent; box-shadow: none; }
+.video-card { display: grid; gap: .6rem; }
+.video-card iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 1rem; background: #000; }
+.video-card .cmd-link { justify-self: start; }
 
 /* Command lines */
 form { margin-top: 1.25rem; }

@@ -61,7 +61,7 @@ function renderLessons() {
     || (l.state === "next" && i > todayAt && i <= todayAt + 3) || (todayAt < 0 && i < 3));
   const mark = { done: "✔", today: "▶", next: "·" };
   $("lessons").replaceChildren(...(shown.length ? shown.map(l => h("li", { class: `lesson-row ${l.state}` },
-    h("span", { class: "lead" }, `${mark[l.state]} ${l.number}`),
+    h("span", { class: "lead" }, `${mark[l.state]} ${l.subject === "biology" ? "bio " : ""}${l.number}`),
     h("span", { class: "what" }, l.title ?? `Lesson ${l.number}`,
       l.unfinished && l.state !== "done" ? h("span", { class: "sub" }, " · not finished") : null),
     l.state === "today"

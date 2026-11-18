@@ -17,7 +17,7 @@ const titles = {
   finish: "Finish the lesson",
 };
 const topics = { S1: "subsets" };
-const kindLabels = { example: "Example", rule: "The rule", remark: "Watch out", try: "Your turn" };
+const kindLabels = { example: "Example", rule: "The rule", remark: "Watch out", try: "Your turn", video: "Watch" };
 const params = new URL(location.href).searchParams;
 const demoId = params.get("demo") || null;
 let engine;
@@ -29,6 +29,7 @@ let helpTool;
 let renderEpoch = 0;
 let toolSig = null;
 let toolReady = Promise.resolve(null);
+let onToolDone = null; // task with tool_mode "answer": the tool's "Use this answer" sends the answer
 let helpOpen = false;
 let workedOk = false;
 let lastTitle = "";
@@ -130,7 +131,7 @@ async function mountTool(host, id, params, mode, step, epoch) {
     if (epoch !== renderEpoch) return null;
     const instance = definition.mount(host, params, {
       mode, lang: "en", reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
-      onEvent() {},
+      onEvent(type, payload) { if (type === "done" && mode === "answer") onToolDone?.(payload); },
     });
     if (mode === "show") instance.setStep(step ?? 0);
     if (busy) for (const control of host.querySelectorAll("button, input")) control.disabled = true;
@@ -234,6 +235,27 @@ function placeTool(id, params, mode, step) {
     else instance?.destroy();
     return instance;
   });
+}
+
+// Contract 5А: an explain line may carry "video", a YouTube link. It is embedded under the line, with a plain link
+// as a fallback. Only YouTube ids are accepted; anything else shows the link alone.
+function placeVideo(url) {
+  const m = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/.exec(url);
+  const card = Object.assign(document.createElement("div"), { className: "video-card" });
+  if (m) {
+    const frame = Object.assign(document.createElement("iframe"), {
+      src: `https://www.youtube-nocookie.com/embed/${m[1]}?rel=0`,
+      title: "Lesson video", loading: "lazy", allowFullScreen: true,
+    });
+    frame.setAttribute("allow", "encrypted-media; picture-in-picture; fullscreen");
+    frame.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+    card.append(frame);
+  }
+  const link = Object.assign(document.createElement("a"), {
+    className: "cmd-link", href: url, target: "_blank", rel: "noopener", textContent: "> open on YouTube",
+  });
+  card.append(link);
+  $("tool").append(card);
 }
 
 // Show a tool for a scene. Consecutive lines that use the same picture keep one tool and just move its step.
@@ -382,6 +404,7 @@ function renderScripted(step) {
     const toolMode = line.kind === "try" || line.tool_mode === "explore" ? "explore" : "show";
     setText({ kind: line.kind, line: line.text, lineKey: `explain:${engine.script}` });
     sceneWithTool(`explain:${engine.script}`, titles.explain, line.tool, line.tool_params, toolMode, line.tool_step);
+    if (line.video && !$("tool").querySelector(".video-card")) placeVideo(line.video);
     const last = engine.script + 1 >= step.script.length;
     if (engine.script > 0) button("Back", async () => back(), "secondary");
     button(last ? "Start practicing" : "Next", async () => { notice = ""; await engine.nextScript(); });
@@ -454,7 +477,15 @@ function render() {
     if (mode === "explore" && current.tool && current.tool_params) {
       sceneWithTool(key, titles[step.type], current.tool, current.tool_params, "explore", 0);
     } else if (mode === "explore") plainScene(key, titles[step.type], text);
-    else if (picture) sceneWithTool(key, titles[step.type], current.tool, current.tool_params, "show", 0);
+    else if (picture) {
+      // Contract 3: a task with "tool_mode": "answer" is answered in the tool (drag the cards, "Use this answer").
+      const inTool = current.tool_mode === "answer";
+      onToolDone = inTool ? state => {
+        const text = (state?.value ?? []).join(", ");
+        void run(() => submit(text || "empty"));
+      } : null;
+      sceneWithTool(key, titles[step.type], current.tool, current.tool_params, inTool ? "answer" : "show", 0);
+    }
     else plainScene(key, titles[step.type], text);
     if (mode === "explore") {
       button("Try the task again", async () => { notice = ""; await engine.continuePractice(); });

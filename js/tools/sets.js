@@ -1,5 +1,5 @@
 const SVG = 'http://www.w3.org/2000/svg';
-const LAYOUTS = ['single', 'subset', 'overlap', 'empty'];
+const LAYOUTS = ['single', 'subset', 'overlap', 'pair', 'empty'];
 const INSET = 18;   // items keep this far inside an oval (room for the outline and the label)
 const GAP = 14;     // items keep this far outside a neighbouring oval
 let uid = 0;
@@ -90,8 +90,8 @@ function esc(value) {
 function normalize(params, mode) {
   if (!params || typeof params !== 'object') throw new TypeError('Pass an object with layout, sets and items.');
   const layout = params.layout ?? 'single';
-  if (!LAYOUTS.includes(layout)) throw new TypeError('layout must be single, subset, overlap or empty.');
-  const need = layout === 'subset' || layout === 'overlap' ? 2 : 1;
+  if (!LAYOUTS.includes(layout)) throw new TypeError('layout must be single, subset, overlap, pair or empty.');
+  const need = layout === 'subset' || layout === 'overlap' || layout === 'pair' ? 2 : 1;
   const given = Array.isArray(params.sets) ? params.sets : [];
   if (given.length < need) throw new TypeError('The ' + layout + ' layout needs ' + need + ' set(s) in "sets".');
   const sets = given.slice(0, need).map((set, k) => ({
@@ -125,6 +125,7 @@ function normalize(params, mode) {
       const a = membership.includes(sets[0].id); const b = membership.includes(sets[1].id);
       return a && b ? 'both' : b ? 'B' : 'A';
     }
+    if (layout === 'pair') return membership.includes(sets[1].id) ? 'B' : 'A';
     return 'A';
   };
   for (const item of items) {
@@ -133,11 +134,12 @@ function normalize(params, mode) {
       : layout === 'subset' ? (selected ? [sets[0].id, sets[1].id] : [sets[0].id]) : [sets[0].id];
     item.final = regionFor(membership);
     item.start = item.start ?? (layout === 'subset' ? 'outer'
-      : layout === 'overlap' && mode !== 'show' ? 'A' : item.final);
+      : (layout === 'overlap' || layout === 'pair') && mode !== 'show' ? 'A' : item.final);
   }
-  const regions = layout === 'subset' ? ['outer', 'inner'] : layout === 'overlap' ? ['A', 'both', 'B'] : ['A'];
+  const regions = layout === 'subset' ? ['outer', 'inner'] : layout === 'overlap' ? ['A', 'both', 'B']
+    : layout === 'pair' ? ['A', 'B'] : ['A'];
   const answerRegions = Array.isArray(params.answerRegions) ? params.answerRegions
-    : layout === 'subset' ? ['inner'] : layout === 'overlap' ? ['both'] : layout === 'single' ? ['A'] : [];
+    : layout === 'subset' ? ['inner'] : layout === 'overlap' ? ['both'] : layout === 'single' || layout === 'pair' ? ['A'] : [];
   // Show steps: a list of step names; some names expand to one step per item.
   const names = Array.isArray(params.steps) ? params.steps
     : layout === 'single' ? ['frame', 'items']
@@ -158,6 +160,11 @@ function normalize(params, mode) {
 
 // ---------- geometry ----------
 function geometry(layout, narrow) {
+  if (layout === 'pair') {
+    return narrow
+      ? { w: 340, h: 760, e: [{ cx: 170, cy: 192, rx: 162, ry: 175 }, { cx: 170, cy: 570, rx: 162, ry: 175 }] }
+      : { w: 600, h: 430, e: [{ cx: 150, cy: 218, rx: 145, ry: 200 }, { cx: 450, cy: 218, rx: 145, ry: 200 }] };
+  }
   if (layout === 'overlap') {
     return narrow
       ? { w: 340, h: 560, e: [{ cx: 170, cy: 190, rx: 150, ry: 160 }, { cx: 170, cy: 370, rx: 150, ry: 160 }] }
@@ -190,6 +197,9 @@ function regionTests(layout, e) {
       B: (x, y) => inside(e[1], x, y, INSET) && outside(e[0], x, y, GAP)
     };
   }
+  if (layout === 'pair') {
+    return { A: (x, y) => inside(e[0], x, y, INSET), B: (x, y) => inside(e[1], x, y, INSET) };
+  }
   return { A: (x, y) => inside(e[0], x, y, INSET) };
 }
 
@@ -200,6 +210,7 @@ function regionAt(layout, e, x, y) {
     const a = inside(e[0], x, y); const b = inside(e[1], x, y);
     return a && b ? 'both' : a ? 'A' : b ? 'B' : null;
   }
+  if (layout === 'pair') return inside(e[0], x, y) ? 'A' : inside(e[1], x, y) ? 'B' : null;
   return inside(e[0], x, y) ? 'A' : null;
 }
 
@@ -403,6 +414,7 @@ export default {
       if (model.layout === 'subset') return key === 'inner' ? b.label : a.label;
       if (model.layout === 'overlap') return key === 'both' ? a.label + ' and ' + b.label
         : (key === 'A' ? a.label : b.label) + ' only';
+      if (model.layout === 'pair') return key === 'B' ? b.label : a.label;
       return a.label;
     }
 
@@ -499,7 +511,7 @@ export default {
       const pos = positions(st, m);
       svg.replaceChildren();
       svg.setAttribute('viewBox', '0 0 ' + geo.w + ' ' + geo.h);
-      svg.setAttribute('aria-label', model.title || (model.layout === 'overlap' ? 'Two overlapping ovals' : 'Oval diagram'));
+      svg.setAttribute('aria-label', model.title || (model.layout === 'overlap' ? 'Two overlapping ovals' : model.layout === 'pair' ? 'Two separate ovals' : 'Oval diagram'));
       svg.append(svgElement('rect', { x: 0, y: 0, width: geo.w, height: geo.h, rx: 22, fill: 'var(--school-grid-bg, var(--school-page))' }));
       const [outer] = geo.e;
       const shade = st.shade ? model.shade : null;
@@ -585,6 +597,11 @@ export default {
     }
 
     function shadeRegions() {
+      const list = shadeList();
+      return list && list.filter(key => model.regions.includes(key));
+    }
+
+    function shadeList() {
       if (model.shade === 'inner') return ['inner'];
       if (model.shade === 'intersection') return ['both'];
       if (model.shade === 'A') return model.layout === 'overlap' ? ['A', 'both'] : ['A'];
