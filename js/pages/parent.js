@@ -10,6 +10,7 @@ const STATUS_RU = { new: "new", seen: "seen", done: "done" };
 let session;
 let data = null;
 let photos = { pending: 0, list: [], failed: false };
+let asks = { list: [], failed: false };
 let busy = false;
 let rateFilled = false;
 const notice = $("notice");
@@ -87,6 +88,27 @@ function renderPhotos() {
       verdictLine(p.model_verdict),
       p.reviewed ? null : h("span", { class: "row-actions" }, cmd("проверено", event => onPhoto(p, event.currentTarget)))
     ))) : [h("li", { class: "empty" }, "Фото пока нет.")]));
+}
+
+const STEP_RU = { recall: "повторение", explain: "объяснение", together: "разбор", solo: "задачи",
+  notebook: "тетрадь", use: "применение", finish: "финиш" };
+
+function renderAsks() {
+  if (asks.failed) {
+    $("asks").replaceChildren(h("li", { class: "empty" }, "Не удалось загрузить вопросы. Нажмите refresh."));
+    return;
+  }
+  const list = asks.list;
+  $("asks").replaceChildren(...(list.length ? list.map(a => h("li", {},
+    h("span", { class: "meta" },
+      h("span", { class: `tag ${a.from_model ? "done" : "seen"}` }, a.from_model ? "учитель" : "запасной ответ"),
+      [fmtWhen(a.created_at, "ru"), a.lesson_number ? `урок ${a.lesson_number}` : `урок ${a.lesson_id}`,
+        STEP_RU[a.step_type] ? `шаг: ${STEP_RU[a.step_type]}` : `шаг ${a.step_type}`,
+        a.task_id ? `задание ${a.task_id}` : null].filter(Boolean).join(" \u00b7 ")),
+    a.prompt ? h("span", { class: "sub" }, `Задание: ${a.prompt}`) : null,
+    h("span", { class: "text" }, "ученик: ", a.question),
+    h("span", { class: "text" }, "учитель: ", a.answer)))
+    : [h("li", { class: "empty" }, "Вопросов пока нет.")]));
 }
 
 function renderFeedback() {
@@ -179,6 +201,10 @@ async function load() {
   } catch { photos = { pending: 0, list: [], failed: true }; }
   renderTop();
   renderSummary();
+  try {
+    asks = { list: (await session.call("asks")).asks ?? [], failed: false };
+  } catch { asks = { list: [], failed: true }; }
+  renderAsks();
   renderPhotos();
   renderRequests();
   renderRate();

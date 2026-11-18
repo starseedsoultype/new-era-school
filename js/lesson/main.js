@@ -3,6 +3,7 @@ import { requireLogin } from "../core/auth.js";
 import { LessonEngine } from "./engine.js";
 import { SET_HINT } from "./answer.js";
 import { nextLessonPage } from "./nav.js";
+import { createAsk } from "./ask.js";
 
 const $ = id => document.getElementById(id);
 const workspace = $("workspace");
@@ -40,6 +41,7 @@ let lastInput;
 let lessonId = null;
 let sending = false;
 let feedbackApi = null;
+let askWindow = null;
 
 function loadProgress(key) {
   try { return JSON.parse(localStorage.getItem(key)) ?? {}; } catch { return {}; }
@@ -314,6 +316,41 @@ function showNotice() {
   }
 }
 
+// `? ask`: one conversation per task or per explanation line. Not offered before the lesson starts, while paused, or after it ends.
+function askContext() {
+  if (!engine || completion || engine.mode === "paused") return null;
+  return { key: engine.current?.id ?? scene ?? engine.step.type, task_id: engine.current?.id ?? null, step_type: engine.step.type };
+}
+
+async function sendAsk({ question, history, ctx }) {
+  let timeout;
+  try {
+    return await Promise.race([
+      engine.api.teacher({ kind: "ask", session_id: engine.id, task_id: ctx.task_id, step_type: ctx.step_type,
+        question, history, lang: "en" }),
+      new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error("Teacher timed out")), 12000); }),
+    ]);
+  } catch (error) {
+    // The server says "ask_limit" in the body of a 400 answer.
+    const body = await error?.context?.json?.().catch(() => null);
+    throw Object.assign(new Error(body?.error ?? "unavailable"), { code: body?.error });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function askButton() {
+  if (!askContext()) return;
+  const node = document.createElement("button");
+  node.type = "button";
+  node.id = "ask-open";
+  node.className = "cmd secondary";
+  node.append(Object.assign(document.createElement("span"), { className: "pre", textContent: "? ", ariaHidden: "true" }), "ask");
+  node.title = "Ask the teacher in your own words";
+  node.addEventListener("click", () => (askWindow.isOpen() ? askWindow.close() : askWindow.open(node)));
+  $("actions").append(node);
+}
+
 function plainScene(key, title, text = "") {
   setText({ prompt: text });
   setScene(key, title);
@@ -437,6 +474,8 @@ function render() {
       helpPanel(step);
     }
   }
+  askButton();
+  askWindow?.refresh();
   showNotice();
   if (refocus === "primary") $("actions").querySelector(".big")?.focus({ preventScroll: true });
   refocus = -1;
@@ -618,6 +657,8 @@ document.addEventListener("keydown", event => {
 $("workspace").addEventListener("click", event => {
   if (typer && !event.target.closest("button, input, textarea, #tool, #help-tool")) finishTyping();
 });
+
+askWindow = createAsk({ getContext: askContext, send: sendAsk, demo: Boolean(demoId) });
 
 setInterval(tick, 250);
 void boot();

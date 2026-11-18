@@ -53,6 +53,14 @@ export function demoServer(role, options = {}) {
       { id: "M-008", number: 8, title: "Multiplication tables", state: "next" },
     ],
   };
+  state.asks = [
+    { id: "a0000000-0000-4000-8000-000000000001", created_at: iso(14 * MIN), lesson_id: "M-003", lesson_number: 3,
+      step_type: "solo", task_id: "S1-g-004", prompt: "Find the union of the sets A and B.",
+      question: "что такое объединение?", answer: "Объединение (union) — это все элементы обоих наборов вместе, без повторов. Например, для {1, 2} и {2, 3} получится {1, 2, 3}.", from_model: true },
+    { id: "a0000000-0000-4000-8000-000000000002", created_at: iso(DAY + 20 * MIN), lesson_id: "M-002", lesson_number: 2,
+      step_type: "explain", task_id: null, prompt: null,
+      question: "what is a subset?", answer: "Try the hint button, or ask your parent.", from_model: false },
+  ];
   state.photos = [
     { id: "p0000000-0000-4000-8000-000000000001", url: sheet("12 x 4 = 48", "#f6f1e4"), created_at: iso(20 * MIN),
       lesson_id: "M-003", lesson_number: 3, task_id: "S1-b-011", prompt: "Find the union of the sets A and B.",
@@ -99,6 +107,10 @@ export function demoServer(role, options = {}) {
       need("parent");
       return { student: true, totals: totals(), rate: state.rate, redemptions: sortedRequests().slice(0, 30),
         feedback: state.feedback, summary: { lessons_done: 2, lessons_total: 40, stars_week: 91 } };
+    }
+    if (action === "asks") {
+      need("parent");
+      return { asks: state.asks };
     }
     if (action === "photos") {
       need("parent");

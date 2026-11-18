@@ -284,3 +284,32 @@ button.cmd:disabled, .cmd-input:disabled { opacity: .55; cursor: wait; }
   color: var(--term-text); background: var(--term-panel);
   border: 1px solid var(--term-line); border-radius: .6rem; cursor: pointer;
 }
+
+/* `? ask` window: sits at the bottom of the window above the feedback line, on every step. */
+.ask-panel { margin: 0; padding: .6rem clamp(1rem, 4vw, 1.75rem) .5rem; border-bottom: 1px solid var(--term-line); background: var(--term-bg); }
+.ask-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .4rem; }
+.ask-title { font-size: .85rem; color: var(--term-muted); }
+.ask-head button.cmd { min-height: 2.4rem; padding: .2rem .8rem; font-size: .9rem; }
+.ask-log { max-height: min(40vh, 18rem); overflow-y: auto; overflow-wrap: anywhere; }
+.ask-line { margin: .35rem 0; font-size: 1rem; line-height: 1.5; }
+.ask-line .ps { color: var(--term-accent); }
+.ask-line.teacher .ps { color: var(--term-green); }
+.ask-line.hello .ask-text, .ask-line.demo .ask-text, .ask-line.limit .ask-text { color: var(--term-muted); }
+.ask-line.error .ask-text { color: var(--term-red); }
+.ask-form { display: flex; align-items: center; gap: .5rem; margin: .5rem 0 0; }
+.ask-form .ps { color: var(--term-accent); font-size: 1rem; flex: 0 0 auto; }
+#ask-input {
+  flex: 1 1 auto; min-width: 0; min-height: 2.6rem; padding: .4rem .7rem; font: inherit; font-size: 1rem;
+  color: var(--term-text); background: var(--term-panel); border: 1px solid var(--term-line);
+  border-radius: .6rem; caret-color: var(--term-green);
+}
+#ask-input:focus { outline: none; border-color: var(--term-accent); box-shadow: 0 0 0 3px rgba(130, 184, 255, .25); }
+.ask-form button { flex: 0 0 auto; min-width: 5.5rem; min-height: 2.6rem; }
+#ask-status { margin: .3rem 0 0; font-size: .9rem; color: var(--term-muted); }
+#ask-status:empty { display: none; }
+.ask-form button:disabled { cursor: not-allowed; }
+.ask-form button.sending:disabled { cursor: wait; }
+@media (max-width: 520px) {
+  .ask-form .ps { display: none; }
+  .ask-form button { min-width: 4.8rem; }
+}
