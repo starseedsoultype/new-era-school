@@ -9,6 +9,7 @@ const $ = id => document.getElementById(id);
 const workspace = $("workspace");
 const answer = $("answer");
 const photo = $("photo");
+const ANSWER_TOOLS = new Set(["sets", "lines"]);
 const toolIds = new Set(["column", "sets", "lines", "fraction_bars", "number_line", "area_grid",
   "percent_bar", "balance", "cubes", "protractor"]);
 const titles = {
@@ -29,7 +30,8 @@ let helpTool;
 let renderEpoch = 0;
 let toolSig = null;
 let toolReady = Promise.resolve(null);
-let onToolDone = null; // task with tool_mode "answer": the tool's "Use this answer" sends the answer
+let answerTool = false; // task with tool_mode "answer": the tool holds the answer, "> check" sends getState()
+let answerTouched = false; // the student moved something (or pressed "Start again") in the answer tool
 let helpOpen = false;
 let workedOk = false;
 let lastTitle = "";
@@ -131,7 +133,7 @@ async function mountTool(host, id, params, mode, step, epoch) {
     if (epoch !== renderEpoch) return null;
     const instance = definition.mount(host, params, {
       mode, lang: "en", reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
-      onEvent(type, payload) { if (type === "done" && mode === "answer") onToolDone?.(payload); },
+      onEvent(type) { if (type === "changed" && mode === "answer") answerTouched = true; },
     });
     if (mode === "show") instance.setStep(step ?? 0);
     if (busy) for (const control of host.querySelectorAll("button, input")) control.disabled = true;
@@ -163,6 +165,8 @@ function setScene(key, title, keepTool = false) {
   $("help-tool").replaceChildren();
   $("entry").value = "";
   $("image").value = "";
+  answerTool = false;
+  answerTouched = false;
   lastInput = undefined;
   if (title !== lastTitle) $("heading").focus({ preventScroll: true });
   lastTitle = title;
@@ -437,6 +441,7 @@ function render() {
     return;
   }
   answer.hidden = true;
+  $("entry").required = true;
   photo.hidden = true;
   $("actions").replaceChildren();
   $("help-panel").replaceChildren();
@@ -478,13 +483,14 @@ function render() {
       sceneWithTool(key, titles[step.type], current.tool, current.tool_params, "explore", 0);
     } else if (mode === "explore") plainScene(key, titles[step.type], text);
     else if (picture) {
-      // Contract 3: a task with "tool_mode": "answer" is answered in the tool (drag the cards, "Use this answer").
-      const inTool = current.tool_mode === "answer";
-      onToolDone = inTool ? state => {
-        const text = (state?.value ?? []).join(", ");
-        void run(() => submit(text || "empty"));
-      } : null;
-      sceneWithTool(key, titles[step.type], current.tool, current.tool_params, inTool ? "answer" : "show", 0);
+      // Contract 3 and 6: a task with "tool_mode": "answer" (sets, lines) is answered in the tool: drag the elements,
+      // then "> check" sends getState(). "answer_params" (optional) is the picture used only for answering.
+      const inTool = current.tool_mode === "answer" && ANSWER_TOOLS.has(current.tool);
+      const shown = inTool && current.tool_params.answer_params
+        ? { ...current.tool_params, ...current.tool_params.answer_params } : current.tool_params;
+      const before = scene;
+      sceneWithTool(key, titles[step.type], current.tool, shown, inTool ? "answer" : "show", 0);
+      if (before !== scene) { answerTool = inTool; answerTouched = false; }
     }
     else plainScene(key, titles[step.type], text);
     if (mode === "explore") {
@@ -501,7 +507,8 @@ function render() {
     } else {
       answer.hidden = false;
       // Real students get tasks without `answer`, so the label shows only where the task carries its kind (demo).
-      $("entry").placeholder = current.answer?.type === "set" ? SET_HINT : "";
+      $("entry").placeholder = answerTool ? "or type the elements here" : current.answer?.type === "set" ? SET_HINT : "";
+      $("entry").required = !answerTool;
       helpPanel(step);
     }
   }
@@ -514,7 +521,17 @@ function render() {
 
 answer.addEventListener("submit", event => {
   event.preventDefault();
-  const input = $("entry").value.trim();
+  let input = $("entry").value.trim();
+  if (!input && answerTool) {
+    // The tool holds the answer: elements of the chosen oval (or lines), joined as the `set` answer of section 3.
+    if (!answerTouched) {
+      notice = "Move the elements first. If the answer is empty, type \u2205 or empty.";
+      render();
+      return;
+    }
+    const value = tool?.getState?.()?.value ?? [];
+    input = value.length ? value.join(value.some(part => String(part).includes(",")) ? "; " : ", ") : "empty";
+  }
   if (!input) return;
   if (engine?.step.worked && !engine.current) {
     // Worked example: the last step is checked here, in the page. It is not a bank task.

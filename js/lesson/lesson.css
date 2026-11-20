@@ -318,3 +318,6 @@ button.cmd:disabled, .cmd-input:disabled { opacity: .55; cursor: wait; }
   .ask-form .ps { display: none; }
   .ask-form button { min-width: 4.8rem; }
 }
+
+/* Answer by drag (tool_mode "answer"): the lesson's "> check" sends the answer, so the tool's own "Use this answer" is hidden. */
+#tool [data-action="done"] { display: none; }

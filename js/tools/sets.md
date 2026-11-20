@@ -16,6 +16,7 @@ The tool draws sets as ovals with a name tab on the outline. Elements are number
 | `shade` | `inner`, `intersection`, `A`, `B`, `union`, `all` | What the last `shade` step highlights. Defaults: `inner` for `subset`, `intersection` for `overlap`, `all` otherwise |
 | `answerRegions` | Array of region names | Which regions `getState()` collects in `explore` and `answer`. Defaults: `["inner"]` for `subset`, `["both"]` for `overlap`, `["A"]` for `single` and `pair` |
 | `symbol` | `true`/`false` | `empty` layout: draw ∅ in the oval at the shade step (default `true`) |
+| `start` | a region name | `explore`/`answer`: where the elements without their own `start` begin (e.g. `"B"` in `pair`). Ignored in `show`. Added 20.11.2026 |
 | `title` | string | Accessible name of the picture |
 
 **Item fields.** `kind`: `text` (default; shows `text`), furniture `table` `chair` `bed` `wardrobe` `lamp`, mushrooms `porcini` (white mushroom) `amanita` (fly agaric) `chanterelle`, fruit `apple` `pear` `plum`, a house `house` (see below), figures `triangle` `square` `circle` `quad` (an irregular quadrilateral). Also: `roof` (`house` only: `metal`, `tile` or `slate`; default `metal`), `id` (default `i0`, `i1`, …), `text` (required for `text`; on a figure it is written on the picture), `label` (caption under the picture; defaults to the English name, for figures to e.g. `dark triangle`; long names wrap onto two lines), `color` (`dark` or `light`, figures only), `value` (what `getState` returns for this element; defaults to `text`, else `label`, else the name), `in` (names of the sets the element belongs to; for `subset` the `select` list is the shortcut; for `overlap` give `["A"]`, `["B"]` or both ids), `start` (region where the element starts in `explore`/`answer`).
@@ -109,3 +110,16 @@ Under the picture: the region buttons, **Start again**, and in `answer` also **U
 ## Run the demo
 
 From the archive root, run `python3 -m http.server 8000` and open `http://localhost:8000/site/js/tools/demo.html?tool=sets`. The example list has furniture, mushrooms, fruit, village houses with three kinds of roofs, multiples of 5, the figures of the book, a whole set, an empty oval and two crossing ovals. Pick **Show**, **Explore** or **Answer**.
+
+## Answering in a lesson task (20.11.2026)
+
+A task `"tool_mode": "answer"` is answered by dragging; the lesson screen mounts the tool in `answer`, the student presses `> check` and the screen sends `getState().value` as the `set` answer (elements joined by `, `, or by `; ` if one contains a comma; nothing moved and the answer is empty: `empty`). The text field stays as a second way. The tool's own "Use this answer" button is hidden in the lesson.
+- Which oval is the answer: `answerRegions` (default `inner` for `subset`). Where the elements start: `start`.
+- `answer_params` (optional, read by the lesson screen, not by the tool): fields that replace the ones of `tool_params` only for answering. The usual use: the show picture is `overlap`/`single`, the answer picture is `pair` with `start: "B"` and `answerRegions: ["A"]`, so the student drags the right elements into the left oval. The show picture is not changed.
+- The element `value`s must be what `answer.value` of the task holds (defaults: `text`, else `label`, else the English name). The answer is never written into `tool_params`.
+
+```json
+{ "layout": "overlap", "sets": [{"id": "K", "label": "Kitchen"}, {"id": "R", "label": "Bedroom"}], "items": [ ... ],
+  "answer_params": { "layout": "pair", "sets": [{"id": "A", "label": "In both"}, {"id": "B", "label": "Not in both"}],
+                     "start": "B", "answerRegions": ["A"] } }
+```

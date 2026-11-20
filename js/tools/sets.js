@@ -138,6 +138,11 @@ function normalize(params, mode) {
   }
   const regions = layout === 'subset' ? ['outer', 'inner'] : layout === 'overlap' ? ['A', 'both', 'B']
     : layout === 'pair' ? ['A', 'B'] : ['A'];
+  // `start`: where the elements without their own `start` begin in explore/answer (not in show).
+  if (params.start != null) {
+    if (!regions.includes(String(params.start))) throw new TypeError('"start" must be one of: ' + regions.join(', ') + '.');
+    if (mode !== 'show') for (const raw of rawItems.keys()) if (rawItems[raw].start == null) items[raw].start = String(params.start);
+  }
   const answerRegions = Array.isArray(params.answerRegions) ? params.answerRegions
     : layout === 'subset' ? ['inner'] : layout === 'overlap' ? ['both'] : layout === 'single' || layout === 'pair' ? ['A'] : [];
   // Show steps: a list of step names; some names expand to one step per item.

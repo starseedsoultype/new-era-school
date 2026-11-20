@@ -25,3 +25,6 @@ Task pictures use `"steps": ["all"]` (everything at step 0). Example: `{"lines":
 
 ## State
 `answer`: `{type:"set", value:[labels of chosen lines]}`. `explore`: `{offset, snapped, lines:[{label, through, parallelTo}]}` or `{value}`. `show`: `{step, lines}`. Events: `ready`, `step`, `changed`, `done` (all points got a line).
+
+## Answering in a lesson task (20.11.2026)
+`"tool_mode": "answer"`: the lesson screen mounts `answer`, the student clicks the lines and presses `> check` (the tool's own "Use this answer" is hidden); the answer is `getState().value`. The line the question is about (the one the others are compared with) gets `"ref": true`: it is drawn but cannot be chosen. `choose` does the same from the other side.
