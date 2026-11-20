@@ -18,7 +18,6 @@ const FAILS = {
 
 let session;
 let data = null;
-let allLessons = false;
 let busy = false;
 const notice = $("notice");
 const input = h("input", { id: "ex-amount", class: "cmd-input", type: "number", inputmode: "numeric", min: "1", step: "1",
@@ -52,31 +51,31 @@ function renderLedger() {
     : [h("li", { class: "empty" }, "No stars yet. Finish a lesson to get the first ones.")]));
 }
 
-function renderLessons() {
+// The week: 6 squares, mon–sat, six lessons in a row (lessons 1–6, then 7–12, ...). Only the day and the subject are shown, never the topic.
+// A square is a link only when its lesson is open: done lessons (again) and today's lesson. The rest wait for the one before.
+const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat"];
+function renderWeek() {
   const list = data.lessons;
-  const todayAt = list.findIndex(l => l.state === "today");
-  const done = list.filter(l => l.state === "done");
-  const shown = allLessons ? list : list.filter((l, i) =>
-    l.state === "today" || (l.state === "done" && done.slice(-2).includes(l))
-    || (l.state === "next" && i > todayAt && i <= todayAt + 3) || (todayAt < 0 && i < 3));
-  const mark = { done: "✔", today: "▶", next: "·" };
-  $("lessons").replaceChildren(...(shown.length ? shown.map(l => h("li", { class: `lesson-row ${l.state}` },
-    h("span", { class: "lead" }, `${mark[l.state]} ${l.subject === "biology" ? "bio " : ""}${l.number}`),
-    h("span", { class: "what" }, l.title ?? `Lesson ${l.number}`,
-      l.unfinished && l.state !== "done" ? h("span", { class: "sub" }, " · not finished") : null),
-    l.state === "today"
-      ? h("a", { class: "cmd-link", href: "lesson.html" }, h("span", { class: "pre", "aria-hidden": "true" }, "> "), "open",
-          h("span", { class: "suf", "aria-hidden": "true" }, " ⏎"))
-      : l.state === "done"
-        // Repeat: a new session for this lesson; stars for answers follow the usual rules, no second lesson reward.
-        ? h("a", { class: "cmd-link", href: `lesson.html?lesson=${encodeURIComponent(l.id)}` },
-            h("span", { class: "pre", "aria-hidden": "true" }, "> "), "again",
-            h("span", { class: "suf", "aria-hidden": "true" }, " ⏎"))
-        : h("span", { class: "when" }, "next"))) : [h("li", { class: "empty" }, "No lessons yet.")]));
-  const hidden = list.length - shown.length;
-  $("lessons-more").replaceChildren(...(hidden > 0 || allLessons
-    ? [cmd(allLessons ? "fewer" : `all lessons (${list.length})`, () => { allLessons = !allLessons; renderLessons(); }, { secondary: true })]
-    : []));
+  let todayAt = list.findIndex(l => l.state === "today");
+  if (todayAt < 0) todayAt = Math.max(0, list.map(l => l.state).lastIndexOf("done"));
+  const start = Math.floor(todayAt / DAYS.length) * DAYS.length;
+  const squares = DAYS.map((day, i) => {
+    const l = list[start + i];
+    if (!l) return h("li", { class: "sq empty-sq" }, h("span", { class: "day" }, day), h("span", { class: "subj" }, "·"));
+    const subject = l.subject === "biology" ? "biology" : "math";
+    const open = l.state === "today" || l.state === "done";
+    const href = l.state === "today" ? "lesson.html" : `lesson.html?lesson=${encodeURIComponent(l.id)}`;
+    const mark = l.state === "done" ? h("span", { class: "mark ok", "aria-hidden": "true" }, "✓")
+      : l.state === "today" ? h("span", { class: "mark go", "aria-hidden": "true" }, "> start")
+      : h("span", { class: "mark", "aria-hidden": "true" }, "locked");
+    const status = l.state === "done" ? "done, open again" : l.state === "today" ? "open, start" : "locked, finish the lesson before";
+    const body = [h("span", { class: "day" }, day), h("span", { class: "subj" }, subject), mark,
+      h("span", { class: "sr-only" }, `, ${status}`)];
+    return open
+      ? h("li", { class: `sq ${l.state}` }, h("a", { href }, ...body))
+      : h("li", { class: "sq lock" }, h("div", {}, ...body));
+  });
+  $("week").replaceChildren(...squares);
 }
 
 function renderRequests() {
@@ -152,7 +151,7 @@ async function load() {
   data = await session.call("student");
   renderTop();
   renderLedger();
-  renderLessons();
+  renderWeek();
   renderRequests();
   refreshPreview();
 }

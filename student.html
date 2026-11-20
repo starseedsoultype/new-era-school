@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>My stars | New Era School</title>
+  <title>Home | New Era School</title>
   <link rel="stylesheet" href="./css/tokens.css">
   <link rel="stylesheet" href="./js/lesson/lesson.css">
   <link rel="stylesheet" href="./js/pages/pages.css">
@@ -15,13 +15,12 @@
     <header class="lesson-bar">
       <div class="titlebar">
         <span class="dots" aria-hidden="true"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i></span>
-        <span class="win-title">new-era-school &mdash; stars</span>
+        <span class="win-title">new-era-school &mdash; home</span>
         <span id="demo-badge" class="badge" hidden>demo</span>
       </div>
       <div class="statusline">
         <a id="stars" href="#exchange-h" aria-live="polite">&#9733; 0</a>
         <span id="waiting"></span>
-        <a id="to-lesson" href="lesson.html">&lt; lesson</a>
         <a id="to-parent" href="parent.html" title="Parent page">parent &gt;</a>
       </div>
     </header>
@@ -40,17 +39,15 @@
       </section>
 
       <section id="workspace" class="pane" aria-labelledby="heading" hidden>
-        <h1 id="heading" tabindex="-1"><span class="ps" aria-hidden="true">$ </span>stars</h1>
+        <h1 id="heading" tabindex="-1"><span class="ps" aria-hidden="true">$ </span>home</h1>
+        <h2 class="kind">this week</h2>
+        <ol id="week" class="week"></ol>
         <p id="balance" class="balance"></p>
         <p id="balance-sub" class="comment"></p>
         <p id="notice" role="status" class="notice"></p>
 
         <h2 class="kind">recent stars</h2>
         <ul id="ledger" class="rows"></ul>
-
-        <h2 id="lessons-h" class="kind" tabindex="-1">lessons</h2>
-        <ul id="lessons" class="rows"></ul>
-        <div id="lessons-more" class="actions"></div>
 
         <h2 id="exchange-h" class="kind" tabindex="-1">exchange</h2>
         <div id="exchange"></div>

@@ -66,6 +66,9 @@ function updateHeader() {
   const number = engine?.lesson.number;
   const topic = engine?.lesson.title ?? topics[engine?.lesson.skills?.[0]];
   $("win-title").textContent = `new-era-school \u2014 lesson${number ? ` ${number}` : ""}${number && topic ? `: ${topic}` : ""}`;
+  const themeEl = $("theme");
+  themeEl.hidden = !(number && topic);
+  if (number && topic) themeEl.textContent = `lesson ${number}: ${topic.toLowerCase()}`;
   const bar = $("progress");
   if (bar.children.length !== total) {
     bar.replaceChildren(...Array.from({ length: total }, () => document.createElement("span")));

@@ -120,3 +120,25 @@ a.cmd-link .pre, a.cmd-link .suf { color: var(--term-green); white-space: pre; }
   .rows.photos > li { grid-template-columns: 5.5rem minmax(0, 1fr); }
   .photos .thumb { width: 5.5rem; height: 4.5rem; }
 }
+
+/* Home: the week as 6 squares, 3 in a row (one on a phone) */
+.week { list-style: none; margin: .5rem 0 1rem; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .7rem; }
+.sq { border: 1px solid var(--term-line); border-radius: .7rem; background: var(--term-panel); min-height: 5.2rem; }
+.sq > a, .sq > div { display: flex; flex-direction: column; gap: .15rem; height: 100%; padding: .75rem .85rem; color: inherit; text-decoration: none; }
+.sq .day { color: var(--term-muted); font-size: .9rem; }
+.sq .subj { font-weight: 700; }
+.sq .mark { margin-top: auto; color: var(--term-muted); font-size: .9rem; }
+.sq.done { border-color: var(--term-green); }
+.sq.done .mark { color: var(--term-green); }
+.sq.today { border: 2px solid var(--term-amber); }
+.sq.today .mark { color: var(--term-amber); font-weight: 700; }
+.sq.lock, .sq.empty-sq { opacity: .6; border-style: dashed; }
+.sq > a:hover { background: var(--term-bar); border-radius: .6rem; }
+.sq > a:focus-visible { outline: 2px solid var(--term-accent); outline-offset: 2px; border-radius: .6rem; }
+@media (max-width: 36rem) { .week { grid-template-columns: minmax(0, 1fr); } }
+
+/* First page */
+.front-title { font-size: clamp(1.5rem, 6vw, 2.1rem); margin-bottom: .5rem; }
+.front-line { margin: 0 0 1.6rem; color: var(--term-muted); max-width: 34rem; }
+.front-doors { display: flex; flex-wrap: wrap; gap: .75rem; margin-bottom: 1.6rem; }
+.front-doors a.cmd { text-decoration: none; display: inline-block; }

@@ -321,3 +321,6 @@ button.cmd:disabled, .cmd-input:disabled { opacity: .55; cursor: wait; }
 
 /* Answer by drag (tool_mode "answer"): the lesson's "> check" sends the answer, so the tool's own "Use this answer" is hidden. */
 #tool [data-action="done"] { display: none; }
+
+/* Lesson topic, big at the top: "lesson 1: subsets" */
+.theme { margin: 0 0 .6rem; font-size: clamp(1.4rem, 5vw, 1.9rem); font-weight: 700; line-height: 1.2; color: var(--term-text); overflow-wrap: anywhere; }
